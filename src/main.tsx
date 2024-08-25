@@ -100,7 +100,7 @@ import {
 } from "./macros.tsx";
 import { TreeItems } from "./macros.tsx";
 import { GeoDistribution } from "./macros.tsx";
-import { ApplicationRaw, DefFunction } from "../deps.ts";
+import { ApplicationRaw, DefFunction, Rb } from "../deps.ts";
 
 const ctx = new Context();
 
@@ -172,7 +172,7 @@ const exp = (
       </P>
 
       <P>
-        When strings are hashed with Bab, servers embed into the data stream efficiently verifiable proofs that the data they have sent so far is indeed part of the requested string. More specifically, Bab enables the following features (all of which will be explained in detail later):
+        When strings are hashed with Bab, servers embed into the data stream efficiently verifiable proofs that the data they have sent so far is indeed part of the requested string. More specifically, Bab enables the following features (all of which will be explained in detail in <Rc n="queries"/>):
       </P>
 
       <Ul>
@@ -264,9 +264,82 @@ const exp = (
             If <R n="lblv"/> is an inner vertex, let <DefValue n="lbl_inner_l" r="left"/> denote its left child, let <DefValue n="lbl_inner_r" r="right"/> denote its right child, let <DefValue n="lbl_inner_len" r="len"/> denote the total length of the <Rs n="chunk"/> corresponding to all leaf descendents of <R n="lblv"/>, and let <DefValue n="lbl_inner_is_root" r="is_root"/> be <Code>true</Code> if and only if <R n="lblv"/> is the root of the tree.
             Then <Application fun="lbl" args={[<R n="lblv"/>]}/> is <Application fun="hash_inner" args={[<R n="lbl_inner_l"/>, <R n="lbl_inner_r"/>, <R n="lbl_inner_len"/>, <R n="lbl_inner_is_root"/>]}/>.
           </P>
+
+          <P>
+            <Rc n="fig_tree_labeled"/> gives an example of a labeled Merkle-tree:
+          </P>
         </PreviewScope>
-      </Hsection>      
+      </Hsection>
+
+      <Hsection n="instantiations" title="Instantiations">
+        <P>
+          The choice of parameters for using Bab is open, but some care needs to be taken to create a secure (i.e., collision-resistant and preimage-resistant) hash function. <R n="hash_chunk"/> and <R n="hash_inner"/> must be secure hash functions themselves, and it must further be impossible to find an input to <R n="hash_chunk"/> and one to <R n="hash_inner"/> such that both yield the same digest.
+        </P>
+
+        <P>
+          We supply two useful instantiations: one based on arbitrary secure hash functions, and a more efficient one that closely mimics Blake3.
+        </P>
+
+        <Hsection n="instantiations_from_secure" title="Via Conventional Hash Function">
+          <PreviewScope>
+            <P>
+              Given a conventional, secure hash function <DefFunction n="conv_h" r="h"/> of digest size <DefValue n="conv_width" r="w"/>, we can instantiate Bab for a <R n="width"/> of <R n="conv_width"/> and an arbitrary <R n="chunk_size"/>.
+            </P>
+
+            <P>
+              Define <Application fun="hash_chunk" args={[<DefValue n="conv_chunk_chunk" r="chunk"/>, <DefValue n="conv_chunk_i" r="index"/>, <DefValue n="conv_chunk_root" r="is_root"/>]}/> as applying <R n="conv_h"/> to the concatenation of
+                <Ul>
+                  <Li>
+                    the byte <Code>0x00</Code> if <R n="conv_chunk_root"/> is <Code>false</Code>, or the byte <Code>0x01</Code> otherwise,
+                  </Li>
+                  <Li>
+                    <R n="conv_chunk_i"/> encoded as an unsigned big-endian 64-bit integer, and
+                  </Li>
+                  <Li>
+                    <R n="conv_chunk_chunk"/>.
+                  </Li>
+                </Ul>
+            </P>
+
+            <P>
+              Define <Application fun="hash_inner" args={[<DefValue n="conv_inner_l" r="left"/>, <DefValue n="conv_inner_r" r="right"/>, <DefValue n="conv_inner_len" r="len"/>, <DefValue n="conv_inner_root" r="is_root"/>]}/> as applying <R n="conv_h"/> to the concatenation of
+                <Ul>
+                  <Li>
+                    the byte <Code>0x02</Code> if <R n="conv_inner_root"/> is <Code>false</Code>, or the byte <Code>0x03</Code> otherwise,
+                  </Li>
+                  <Li>
+                    <R n="conv_inner_len"/> encoded as an unsigned big-endian 64-bit integer,
+                  </Li>
+                  <Li>
+                    <R n="conv_inner_l"/>, and
+                  </Li>
+                  <Li>
+                    <R n="conv_inner_r"/>.
+                  </Li>
+                </Ul>
+            </P>
+          </PreviewScope>
+        </Hsection>
+        
+        <Hsection n="instantiations_william" title="William3">
+          <PreviewScope>
+            <P>
+              <DefFunction n="william3" r="William3" rb="William3"/> is a Bab instantiation that is almost dentical to Blake3. The only difference is that <R n="william3"/> incorporates a length value into the label computation of inner tree vertices. <Rb n="william3"/> has a normal hash mode and a keyed hash mode (based on a 256 bit key); unlike Blake3 it does not support a key derivation mode.
+            </P>
+
+            <P>
+              <Rb n="william3"/> uses a <R n="chunk_size"/> of 1024 bytes (just like Blake3). Its <R n="width"/> is 32 bytes (just like Blake3). The <R n="hash_chunk"/> function is identical to the Blake3 computation of <Em>chunk chaining values</Em>. The <R n="hash_inner"/> function is almost identical to the Blake3 computation of <Em>parent node chaining values</Em>, with a single exception: whereas Blake3 sets the <Code>t</Code> parameter of its compression function to 0, <R n="william3"/> sets <Code>t</Code> to the third argument (the length value) of <R n="hash_chunk"/> (as an unsigned <Em>little</Em>-endian 64-bit integer).
+            </P>
+          </PreviewScope>
+        </Hsection>
+      </Hsection>
     </Hsection>
+
+    <Hsection n="queries" title="Queries and Verifiable Responses">
+      <Alj inline>TODO</Alj>
+    </Hsection>
+
+
 
     <Hsection title="References" n="bibliography" noNumbering>
       <Bibliography />
