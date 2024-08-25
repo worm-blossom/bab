@@ -1,5 +1,5 @@
-# Geometric Search Trees
+# Bab
 
-> A family of randomized, history-independent search tree data structures
+> Bab is a secure hash function heavily inspired by Blake3, designed for use in peer-to-peer content-addressed storage systems.
 
-The paper is written using Macromania, see the [Macromania demo repository](https://github.com/worm-blossom/demo_macromania) to learn what is going on here.
+The document is written using Macromania, see the [Macromania demo repository](https://github.com/worm-blossom/demo_macromania) to learn what is going on here.
