@@ -233,6 +233,10 @@ macromania_rustic
     font-size: 0.85em;
 }
 
+.pseudocode .rustic {
+    font-size: 0.85rem;
+}
+
 .rustic.value {
     color: var(--sol-orange);
 }
