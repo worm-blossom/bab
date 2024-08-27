@@ -238,141 +238,74 @@ export function Quotes({ children }: { children: Expressions }): Expression {
 // Specific to this paper. //
 /////////////////////////////
 
-export function TreeItems({ children }: { children: Expressions }): Expression {
+function Turbo({ children, color }: { children: Expressions, color: string }): Expression {
   return (
-    <NoWrap>
-      <Access at="items">
-        <exps x={children} />
-      </Access>
-    </NoWrap>
-  );
-}
-
-/**
- * children are the index of the item.
- */
-export function TreeItem(
-  { tree, children }: { tree: Expressions; children: Expressions },
-): Expression {
-  return (
-    <NoWrap>
-      <Index index={<exps x={children} />}>
-        <TreeItems>
-          <exps x={tree} />
-        </TreeItems>
-      </Index>
-    </NoWrap>
-  );
-}
-
-export function TreeChildren(
-  { children }: { children: Expressions },
-): Expression {
-  return (
-    <NoWrap>
-      <Access at="children">
-        <exps x={children} />
-      </Access>
-    </NoWrap>
-  );
-}
-
-/**
- * children are the index of the child.
- */
-export function TreeChild(
-  { tree, children }: { tree: Expressions; children: Expressions },
-): Expression {
-  return (
-    <NoWrap>
-      <Index index={<exps x={children} />}>
-        <TreeChildren>
-          <exps x={tree} />
-        </TreeChildren>
-      </Index>
-    </NoWrap>
-  );
-}
-
-/**
- * children are success probability.
- */
-export function GeoDistribution(
-  { children }: { children: Expressions },
-): Expression {
-  return (
-    <M>
-      <R n="geometric_distribution" />
-      {`(`}
-      <exps x={children} />
-      {`)`}
-    </M>
-  );
-}
-
-/**
- * p is the probability. If children are given, renders a function call.
- */
-export function Rank(
-  { p, children }: { p?: Expressions; children?: Expressions },
-): Expression {
-  return (
-    <M>
-      <R n="fn_rank" />
-      {p
-        ? (
-          <>
-            _{"{"}
-            <exps x={p} />
-            {"}"}
-          </>
-        )
-        : ""}
-      {children === undefined ? "" : (
-        <>
-          (<exps x={children} />)
-        </>
-      )}
-    </M>
-  );
-}
-
-export function Hash(
-  { children }: { children?: Expressions },
-): Expression {
-  return (
-    <M><OpName>hash</OpName>\left(<exps x={children} />\right)</M>
-  );
-}
-
-export function Orange({ children }: { children: Expressions }): Expression {
-  return (
-    <Span style="color: #ff8000">
+    <Span clazz="coloredData" style={`background: #${color};`}>
       <exps x={children} />
     </Span>
   );
 }
 
-export function Magenta({ children }: { children: Expressions }): Expression {
-  return (
-    <Span style="color: #fb3199">
-      <exps x={children} />
-    </Span>
-  );
+export function Turbo1({ children }: { children: Expressions}): Expression {
+  return <Turbo color="5C39A3"><exps x={children} /></Turbo>
 }
 
-export function Cyan({ children }: { children: Expressions }): Expression {
-  return (
-    <Span style="color: #00b9f2">
-      <exps x={children} />
-    </Span>
-  );
+export function Turbo2({ children }: { children: Expressions}): Expression {
+  return <Turbo color="5349C9"><exps x={children} /></Turbo>
 }
 
-export function Pink({ children }: { children: Expressions }): Expression {
-  return (
-    <Span style="color: #ffbfbf">
-      <exps x={children} />
-    </Span>
-  );
+export function Turbo3({ children }: { children: Expressions}): Expression {
+  return <Turbo color="426FF2"><exps x={children} /></Turbo>
+}
+
+export function Turbo4({ children }: { children: Expressions}): Expression {
+  return <Turbo color="2F9DF5"><exps x={children} /></Turbo>
+}
+
+export function Turbo5({ children }: { children: Expressions}): Expression {
+  return <Turbo color="25C6D8"><exps x={children} /></Turbo>
+}
+
+export function Turbo6({ children }: { children: Expressions}): Expression {
+  return <Turbo color="2EE5AE"><exps x={children} /></Turbo>
+}
+
+export function Turbo7({ children }: { children: Expressions}): Expression {
+  return <Turbo color="4DF884"><exps x={children} /></Turbo>
+}
+
+export function Turbo8({ children }: { children: Expressions}): Expression {
+  return <Turbo color="7BFE5F"><exps x={children} /></Turbo>
+}
+
+export function Turbo9({ children }: { children: Expressions}): Expression {
+  return <Turbo color="AFF444"><exps x={children} /></Turbo>
+}
+
+export function Turbo10({ children }: { children: Expressions}): Expression {
+  return <Turbo color="DEDD32"><exps x={children} /></Turbo>
+}
+
+export function Turbo11({ children }: { children: Expressions}): Expression {
+  return <Turbo color="FEB927"><exps x={children} /></Turbo>
+}
+
+export function Turbo12({ children }: { children: Expressions}): Expression {
+  return <Turbo color="FF8E1F"><exps x={children} /></Turbo>
+}
+
+export function Turbo13({ children }: { children: Expressions}): Expression {
+  return <Turbo color="F65F18"><exps x={children} /></Turbo>
+}
+
+export function Turbo14({ children }: { children: Expressions}): Expression {
+  return <Turbo color="D0330E"><exps x={children} /></Turbo>
+}
+
+export function Turbo15({ children }: { children: Expressions}): Expression {
+  return <Turbo color="A51403"><exps x={children} /></Turbo>
+}
+
+export function Turbo16({ children }: { children: Expressions}): Expression {
+  return <Turbo color="900C00"><exps x={children} /></Turbo>
 }

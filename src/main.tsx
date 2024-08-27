@@ -97,10 +97,26 @@ import {
   TreeChild,
   TreeChildren,
   TreeItem,
+  Turbo1,
+  Turbo10,
+  Turbo11,
+  Turbo12,
+  Turbo13,
+  Turbo14,
+  Turbo15,
+  Turbo16,
+  Turbo2,
+  Turbo3,
+  Turbo4,
+  Turbo5,
+  Turbo6,
+  Turbo7,
+  Turbo8,
+  Turbo9,
 } from "./macros.tsx";
 import { TreeItems } from "./macros.tsx";
 import { GeoDistribution } from "./macros.tsx";
-import { Access, ApplicationRaw, Assign, AssignRaw, CommentLine, DefField, DefFunction, DefType, FunctionItemUntyped, Gte, Rb } from "../deps.ts";
+import { Access, ApplicationRaw, Assign, AssignRaw, CommentLine, DefField, DefFunction, DefType, FunctionItemUntyped, Gte, Hr, Rb } from "../deps.ts";
 
 const ctx = new Context();
 
@@ -185,6 +201,10 @@ const exp = (
       <P>
         Bab employs many of the same techniques as the <A href="https://github.com/BLAKE3-team/BLAKE3-specs/blob/master/blake3.pdf">Blake3</A>-based <A href="https://github.com/oconnor663/bao/blob/master/docs/spec.md">Bao</A> spec. Key differences are short proofs of string length, more efficient slice requests, and a hash-function-agnostic specification. Bao is a byproduct of a well-designed general-purpose hash function, whereas Bab is a special-purpose hash function that gets to add features beyond Bao’s capabilities.
       </P>
+
+      <P>
+        We first define Bab in <Rc n="the_function"/>, before thoroughly explaining and justifying the design in <Rc n="rationale"/>, both from a high-level view and in its details. We examine optimizations for verified streaming in <Rc n="optimizations"/>.
+      </P>
     </Hsection>
 
     <Hsection n="the_function" title="The Bab Hash Function">
@@ -264,11 +284,30 @@ const exp = (
             If <R n="lblv"/> is an inner vertex, let <DefValue n="lbl_inner_l" r="left"/> denote its left child, let <DefValue n="lbl_inner_r" r="right"/> denote its right child, let <DefValue n="lbl_inner_len" r="len"/> denote the total length of the <Rs n="chunk"/> corresponding to all leaf descendents of <R n="lblv"/>, and let <DefValue n="lbl_inner_is_root" r="is_root"/> be <Code>true</Code> if and only if <R n="lblv"/> is the root of the tree.
             Then <Application fun="lbl" args={[<R n="lblv"/>]}/> is <Application fun="hash_inner" args={[<R n="lbl_inner_l"/>, <R n="lbl_inner_r"/>, <R n="lbl_inner_len"/>, <R n="lbl_inner_is_root"/>]}/>.
           </P>
-
-          <P>
-            <Rc n="fig_tree_labeled"/> gives an example of a labeled Merkle-tree:
-          </P>
         </PreviewScope>
+
+        <P>
+          <Rc n="fig_tree_labeled"/> demonstrates the label computation in the example Merkle-tree:
+        </P>
+
+        <Fig
+          n="fig_tree_labeled"
+          wrapperTagProps={{clazz: "wide"}}
+          title="Labeled Example Tree"
+          caption={
+            <>
+              <P>
+                The label computations for the example tree in <Rc n="fig_tree_unlabeled"/>.
+              </P>
+            </>
+          }
+        >
+          <Img
+            src={<ResolveAsset asset={["graphics", "tree_labeled.svg"]} />}
+            alt="A left-full binary tree, where each vertex shows how to compute its label."
+          />
+        </Fig>
+        
       </Hsection>
 
       <Hsection n="instantiations" title="Instantiations">
@@ -324,7 +363,7 @@ const exp = (
         <Hsection n="instantiations_william" title="William3">
           <PreviewScope>
             <P>
-              <DefFunction n="william3" r="William3" rb="William3"/> is a Bab instantiation that is almost dentical to Blake3. The only difference is that <R n="william3"/> incorporates a length value into the label computation of inner tree vertices. <Rb n="william3"/> has a normal hash mode and a keyed hash mode (based on a 256 bit key); unlike Blake3 it does not support a key derivation mode.
+              <DefFunction n="william3" r="William3" rb="William3"/> is a Bab instantiation that is almost identical to Blake3. The only difference is that <R n="william3"/> incorporates a length value into the label computation of inner tree vertices. <Rb n="william3"/> has a normal hash mode and a keyed hash mode (based on a 256 bit key); unlike Blake3 it does not support a key derivation mode.
             </P>
 
             <P>
@@ -334,6 +373,88 @@ const exp = (
         </Hsection>
       </Hsection>
     </Hsection>
+
+    <Hsection n="rationale" title="Design Rationale">
+      <P>
+        We now explain the decisions that went into the definition of the Bab hash function.
+      </P>
+
+      <Hsection n="streaming_verification" title="Streaming Verification">
+        <P>
+          Using the root label of a Merkle-tree as the digest opens up the option of incrementally verifying a string as it is being received as belonging to the requested hash. To do so, the transmission of each chunk is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to the chunk. As an optimization, each label is transmitted at most once; it is the receiver’s responsibility to cache labels until they are not needed for verification any longer. At the very start of the transmission, the length of the string has to be sent. 
+        </P>
+
+        <P>
+          As an example, consider again <Rc n="fig_tree_labeled"/>. To stream the string <Code>hello_world</Code> and allow a receiving client to verify data integrity along the way, a server first sends the length of the string (11 bytes), followed by the labels of the left and right children of the root (<Application fun="lbl" args={["2"]}/> and <Application fun="lbl" args={["2"]}/>). When the client receives those labels, it can feed them into <R n="hash_inner"/>, to verify that the result equals the original digest (i.e., the root label). If the Bab instantiation is secure, then the server cannot possibly have fabricated these values — the two supplied values must indeed have been labels of the Merkle tree.
+        </P>
+
+        <P>
+          Having transmitted the labels of the left and right children of the root, the data stream continues with the labels of the left and right children of the next vertex on the path from the root to the first chunk: that vertex is <M>2</M>, so the transmitted labels are <Application fun="lbl" args={["3"]}/> and <Application fun="lbl" args={["6"]}/>. The client can then verify that feeding them into <R n="hash_inner"/> yields the (already verified) label of vertex <M>2</M>. Next in the stream, vertex <M>3</M> contributes its two child labels, which are again verified.
+        </P>
+
+        <P>
+          Next, the stream contains the raw chunk corresponding to vertex <M>4</M>: <Code>he</Code>. The client puts that data (and its chunk index) into <R n="hash_chunk"/>, to verify that it indeed yields the previously transmitted label of vertex <M>4</M>.
+        </P>
+
+        <P>
+          The next chunk to verify corresponds to vertex <M>5</M>, so now we need the labels of all children of the inner vertices on the path from the root to vertex <M>5</M>. All of these vertices (<M>1, 2, 3</M>) have <Em>already</Em> contributed their child labels earlier in the response stream, so all of those are skipped. The next bit of data in the stream is the second chunk: <Code>ll</Code>.
+        </P>
+
+        <P>
+          The third chunk is slightly more interesting: on the path from the root to it (<M>1, 2, 6, 7</M>), the final <Em>two</Em> vertices have not contributed yet. Hence, the stream resumes with the labels of the children of vertex <M>6</M>, followed by the chunk corresponding to vertex <M>7</M>: <Code>o_</Code>.
+        </P>
+
+        <P>
+          The response stream continues in this fashion; <Rc n="fig_stream"/> visualizes and lists the full stream:
+        </P>
+
+        <Fig
+          n="fig_stream"
+          // wrapperTagProps={{clazz: "wide"}}
+          title="Verifiable Streaming Example"
+          caption={
+            <>
+              <P>
+                The vertices of our recurring example tree, each showing the data that they contribute to the data stream that lets a client incrementally verify the digest of the string <Code>hello_world</Code>.
+              </P>
+              <P>
+                The data to transmit is color-coded to indicate the order; the full stream is: <Sidenote note="The length of the original string in bytes."><Code>11</Code></Sidenote>, <Turbo1><Application fun="lbl" args={["2"]}/></Turbo1>, <Turbo2><Application fun="lbl" args={["9"]}/></Turbo2>, <Turbo3><Application fun="lbl" args={["3"]}/></Turbo3>, <Turbo4><Application fun="lbl" args={["6"]}/></Turbo4>, <Turbo5><Application fun="lbl" args={["4"]}/></Turbo5>, <Turbo6><Application fun="lbl" args={["5"]}/></Turbo6>, <Turbo7><Code>he</Code></Turbo7>, <Turbo8><Code>ll</Code></Turbo8>, <Turbo9><Application fun="lbl" args={["8"]}/></Turbo9>, <Turbo10><Application fun="lbl" args={["8"]}/></Turbo10>, <Turbo11><Code>o_</Code></Turbo11>, <Turbo12><Code>wo</Code></Turbo12>, <Turbo13><Application fun="lbl" args={["10"]}/></Turbo13>, <Turbo14><Application fun="lbl" args={["11"]}/></Turbo14>, <Turbo15><Code>rl</Code></Turbo15>, <Turbo16><Code>d</Code></Turbo16>.
+              </P>
+              <P>
+                Listing the vertices in the order in which they contribute their child labels or chunks is instructive: <M post=".">1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11</M> Can you spot the pattern?
+              </P>
+            </>
+          }
+        >
+          <Img
+            src={<ResolveAsset asset={["graphics", "example_full_stream.svg"]} />}
+            alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the verified data stream."
+          />
+        </Fig>
+      </Hsection>
+
+      <Hsection n="slice_verification" title="Slice Verification">
+        <P>
+
+        </P>
+      </Hsection>
+
+      <Hsection n="details" title="Details">
+        <P>
+          <Alj inline>TODO justify: chunks instead of individual bytes, chunk offset in hash_chunk, is_root flag in hash_chunk and hash_inner, lenght in (each) hash_inner, choice of merkle dag.</Alj>
+        </P>
+      </Hsection>
+    </Hsection>
+
+    <Hsection n="optimizations" title="Optimizations">
+      <P>
+        <Alj inline>TODO</Alj>
+      </P>
+    </Hsection>
+
+    <Hr/>
+    <Alj inline>older draft text below.</Alj>
+
 
     <Hsection n="requests" title="Requests and Verifiable Responses">
         <P>
@@ -625,7 +746,3 @@ const exp = (
 // Evaluate the expression. This has exciting side-effects,
 // like creating a directory that contains a website!
 ctx.evaluate(exp);
-
-/*
-what, why (link), sync/nb/nb_send, basics: producer-buffered-bulk, consumer-buffered-bulk, piping, wrappers, feature flags, queues, converters
-*/
