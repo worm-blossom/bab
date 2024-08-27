@@ -385,7 +385,7 @@ const exp = (
         </P>
 
         <P>
-          As an example, consider again <Rc n="fig_tree_labeled"/>. To stream the string <Code>hello_world</Code> and allow a receiving client to verify data integrity along the way, a server first sends the length of the string (11 bytes), followed by the labels of the left and right children of the root (<Application fun="lbl" args={["2"]}/> and <Application fun="lbl" args={["2"]}/>). When the client receives those labels, it can feed them into <R n="hash_inner"/>, to verify that the result equals the original digest (i.e., the root label). If the Bab instantiation is secure, then the server cannot possibly have fabricated these values — the two supplied values must indeed have been labels of the Merkle tree.
+          As an example, consider again <Rc n="fig_tree_labeled"/>. To stream the string <Code>hello_world</Code> and allow a receiving client to verify data integrity along the way, a server first sends the length of the string (11 bytes), followed by the labels of the left and right children of the root (<Application fun="lbl" args={["2"]}/> and <Application fun="lbl" args={["9"]}/>). When the client receives those labels, it can feed them into <R n="hash_inner"/>, to verify that the result equals the original digest (i.e., the root label). If the Bab instantiation is secure, then the server cannot possibly have fabricated these values — the two supplied values must indeed have been labels of the Merkle tree.
         </P>
 
         <P>
@@ -418,14 +418,14 @@ const exp = (
                 The vertices of our recurring example tree, each showing the data that they contribute to the data stream that lets a client incrementally verify the digest of the string <Code>hello_world</Code>.
               </P>
               <P>
-                The data to transmit is color-coded to indicate the order; the full stream is: <Sidenote note="The length of the original string in bytes."><Code>11</Code></Sidenote>, <Turbo1><Application fun="lbl" args={["2"]}/></Turbo1>, <Turbo2><Application fun="lbl" args={["9"]}/></Turbo2>, <Turbo3><Application fun="lbl" args={["3"]}/></Turbo3>, <Turbo4><Application fun="lbl" args={["6"]}/></Turbo4>, <Turbo5><Application fun="lbl" args={["4"]}/></Turbo5>, <Turbo6><Application fun="lbl" args={["5"]}/></Turbo6>, <Turbo7><Code>he</Code></Turbo7>, <Turbo8><Code>ll</Code></Turbo8>, <Turbo9><Application fun="lbl" args={["8"]}/></Turbo9>, <Turbo10><Application fun="lbl" args={["8"]}/></Turbo10>, <Turbo11><Code>o_</Code></Turbo11>, <Turbo12><Code>wo</Code></Turbo12>, <Turbo13><Application fun="lbl" args={["10"]}/></Turbo13>, <Turbo14><Application fun="lbl" args={["11"]}/></Turbo14>, <Turbo15><Code>rl</Code></Turbo15>, <Turbo16><Code>d</Code></Turbo16>.
-              </P>
-              <P>
-                Listing the vertices in the order in which they contribute their child labels or chunks is instructive: <M post=".">1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11</M> Can you spot the pattern?
+                Listing the vertices in the order in which they contribute their child labels or chunks is quite instructive: <M post=".">1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11</M> Can you spot the pattern?
               </P>
             </>
           }
         >
+          <P>
+            <Sidenote note="The length of the original string in bytes."><Code>11</Code></Sidenote>, <Turbo1><Application fun="lbl" args={["2"]}/></Turbo1>, <Turbo2><Application fun="lbl" args={["9"]}/></Turbo2>, <Turbo3><Application fun="lbl" args={["3"]}/></Turbo3>, <Turbo4><Application fun="lbl" args={["6"]}/></Turbo4>, <Turbo5><Application fun="lbl" args={["4"]}/></Turbo5>, <Turbo6><Application fun="lbl" args={["5"]}/></Turbo6>, <Turbo7><Code>he</Code></Turbo7>, <Turbo8><Code>ll</Code></Turbo8>, <Turbo9><Application fun="lbl" args={["8"]}/></Turbo9>, <Turbo10><Application fun="lbl" args={["8"]}/></Turbo10>, <Turbo11><Code>o_</Code></Turbo11>, <Turbo12><Code>wo</Code></Turbo12>, <Turbo13><Application fun="lbl" args={["10"]}/></Turbo13>, <Turbo14><Application fun="lbl" args={["11"]}/></Turbo14>, <Turbo15><Code>rl</Code></Turbo15>, <Turbo16><Code>d</Code></Turbo16>.
+          </P>
           <Img
             src={<ResolveAsset asset={["graphics", "example_full_stream.svg"]} />}
             alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the verified data stream."
