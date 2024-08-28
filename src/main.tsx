@@ -117,6 +117,7 @@ import {
 import { TreeItems } from "./macros.tsx";
 import { GeoDistribution } from "./macros.tsx";
 import { Access, ApplicationRaw, Assign, AssignRaw, Blockquote, CommentLine, DefField, DefFunction, DefType, FunctionItemUntyped, Gte, Hr, Rb } from "../deps.ts";
+import { VisualizeVerification } from "./macros.tsx";
 
 const ctx = new Context();
 
@@ -450,7 +451,7 @@ const exp = (
           caption={
             <>
               <P>
-                The vertices of our recurring example tree, each showing the data that they contribute to the data stream that lets a client incrementally verify a slice of three chunks, starting at chunk offset two, in the string <Code>hello_world</Code> .
+                The vertices of our recurring example tree, each showing the data that they contribute to the data stream that lets a client incrementally verify a slice of three chunks, starting at chunk offset two, in the string <Code>hello_world</Code>.
               </P>
               <P>
                 The list of vertices in the order in which they contribute their child labels or chunks now has some gaps, but is still strictly ascending: <M post=".">1, 2, 6, 7, 8, 9, 10</M>
@@ -534,7 +535,7 @@ const exp = (
 
       <Hsection n="chunk_size_concerns" title="Chunk Size">
         <P>
-          Bab leaves the <R n="chunk_size"/> as a freely choosable parameter, because different values incur different tradeoffs. At the most basic, a larger <R n="chunk_size"/> shrinks the Merkle tree and thus reduces the metadata overhead in verified streaming, but it also increases the amount of data that needs to be read in sequence without being able to verify it immediately. The <R n="chunk_size"/> also serves as an upper bound to the size of proofs of string length in Bab. Finally, the chunk size also affects the performance of computing strings, see the discussion in <A href="https://raw.githubusercontent.com/BLAKE3-team/BLAKE3-specs/master/blake3.pdf#section.7">the Blake3 paper</A>.
+          Bab leaves the <R n="chunk_size"/> as a freely choosable parameter, because different values incur different tradeoffs. At the most basic, a larger <R n="chunk_size"/> shrinks the Merkle tree and thus reduces the metadata overhead in verified streaming, but it also increases the amount of data that needs to be read in sequence without being able to verify it immediately. The <R n="chunk_size"/> also serves as an upper bound to the size of proofs of string length in Bab. Finally, the chunk size also affects the performance of computing strings, see the discussion in <A href="https://raw.githubusercontent.com/BLAKE3-team/BLAKE3-specs/master/blake3.pdf#section.7">Section 7.1 of the Blake3 paper</A>.
         </P>
       </Hsection>
     </Hsection>
@@ -543,6 +544,167 @@ const exp = (
       <P>
         <Alj inline>TODO</Alj>
       </P>
+
+      <Fig
+          n="fig_buffering_default"
+          wrapperTagProps={{clazz: "wide"}}
+          title="TODO"
+          caption={
+            <>
+              <P>
+                TODO
+              </P>
+            </>
+          }
+        >
+          <VisualizeVerification
+            compact
+            boxes={[
+              {isChunk: false, content: "2"}, {isChunk: false, content: "9"},
+              {isChunk: false, content: "3"}, {isChunk: false, content: "6"},
+              {isChunk: false, content: "4"}, {isChunk: false, content: "5"},
+              {isChunk: true, content: "he"},
+              {isChunk: true, content: "ll"},
+              {isChunk: false, content: "7"}, {isChunk: false, content: "8"},
+              {isChunk: true, content: "o_"},
+              {isChunk: true, content: "wo"},
+              {isChunk: false, content: "10"}, {isChunk: false, content: "11"},
+              {isChunk: true, content: "rl"},
+              {isChunk: true, content: "d"},
+            ]}
+            states={[
+              ["unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["veri", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["done", "veri", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["done", "veri", "veri", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["done", "veri", "done", "veri", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["done", "veri", "done", "veri", "done", "veri", "done", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["done", "veri", "done", "veri", "done", "done", "done", "done", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["done", "veri", "done", "veri", "done", "done", "done", "done", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["done", "veri", "done", "done", "done", "done", "done", "done", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["done", "veri", "done", "done", "done", "done", "done", "done", "done", "veri", "done", "miss", "miss", "miss", "miss", "miss"],
+              ["done", "veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "miss", "miss", "miss", "miss"],
+              ["done", "veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "unve", "miss", "miss", "miss"],
+              ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "veri", "veri", "miss", "miss"],
+              ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "veri", "done", "miss"],
+              ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done"],
+            ]}
+          />
+        </Fig>
+
+        <Fig
+          n="fig_buffering_free"
+          wrapperTagProps={{clazz: "wide"}}
+          title="TODO"
+          caption={
+            <>
+              <P>
+                TODO
+              </P>
+            </>
+          }
+        >
+          <VisualizeVerification
+            compact
+            boxes={[
+              {isChunk: false, content: "9"},
+              {isChunk: false, content: "6"},
+              {isChunk: false, content: "4"},
+              {isChunk: false, content: "5"},
+              {isChunk: true, content: "he"},
+              {isChunk: true, content: "ll"},
+              {isChunk: false, content: "7"},
+              {isChunk: false, content: "8"},
+              {isChunk: true, content: "o_"},
+              {isChunk: true, content: "wo"},
+              {isChunk: false, content: "10"},
+              {isChunk: false, content: "11"},
+              {isChunk: true, content: "rl"},
+              {isChunk: true, content: "d"},
+            ]}
+            states={[
+              ["unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["unve", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["unve", "unve", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["veri", "veri", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["veri", "veri", "done", "veri", "done", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["veri", "veri", "done", "done", "done", "done", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["veri", "veri", "done", "done", "done", "done", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["veri", "done", "done", "done", "done", "done", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["veri", "done", "done", "done", "done", "done", "done", "unve", "done", "miss", "miss", "miss", "miss", "miss"],
+              ["veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "miss", "miss", "miss", "miss"],
+              ["veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "unve", "miss", "miss", "miss"],
+              ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "veri", "veri", "miss", "miss"],
+              ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "veri", "done", "miss"],
+              ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done"],
+            ]}
+          />
+        </Fig>
+
+        <Fig
+          n="fig_buffering_group2"
+          wrapperTagProps={{clazz: "wide"}}
+          title="TODO"
+          caption={
+            <>
+              <P>
+                TODO
+              </P>
+            </>
+          }
+        >
+          <VisualizeVerification
+            boxes={[
+              {isChunk: false, content: "9"},
+              {isChunk: false, content: "3"},
+              {isChunk: false, content: "6"},
+              {isChunk: true, content: "he"},
+              {isChunk: true, content: "ll"},
+              {isChunk: true, content: "o_"},
+              {isChunk: true, content: "wo"},
+              {isChunk: true, content: "rl"},
+              {isChunk: true, content: "d"},
+            ]}
+            states={[
+              ["unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["unve", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["veri", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["veri", "veri", "veri", "unve", "miss", "miss", "miss", "miss", "miss"],
+              ["veri", "done", "veri", "done", "done", "miss", "miss", "miss", "miss"],
+              ["veri", "done", "veri", "done", "done", "unve", "miss", "miss", "miss"],
+              ["veri", "done", "done", "done", "done", "done", "done", "miss", "miss"],
+              ["veri", "done", "done", "done", "done", "done", "done", "unve", "miss"],
+              ["done", "done", "done", "done", "done", "done", "done", "done", "done"],
+            ]}
+          />
+        </Fig>
+
+
+        {/* <VisualizeVerification
+            boxes={[
+              {isChunk: false, content: "2"}, {isChunk: false, content: "9"},
+              {isChunk: false, content: "3"}, {isChunk: false, content: "6"},
+              {isChunk: false, content: "7"}, {isChunk: false, content: "8"},
+              {isChunk: true, content: "o_"},
+              {isChunk: true, content: "wo"},
+              {isChunk: false, content: "10"}, {isChunk: false, content: "11"},
+              {isChunk: true, content: "rl"},
+            ]}
+            states={[
+              ["unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["done", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["done", "veri", "done", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["done", "veri", "done", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss"],
+              ["done", "veri", "done", "done", "veri", "veri", "miss", "miss", "miss", "miss", "miss"],
+              ["done", "veri", "done", "done", "done", "veri", "done", "miss", "miss", "miss", "miss"],
+              ["done", "veri", "done", "done", "done", "done", "done", "done", "miss", "miss", "miss"],
+              ["done", "veri", "done", "done", "done", "done", "done", "done", "unve", "miss", "miss"],
+              ["done", "done", "done", "done", "done", "done", "done", "done", "veri", "done", "miss"],
+              ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done"],
+            ]}
+          /> */}
     </Hsection>
 
     <Hr/>

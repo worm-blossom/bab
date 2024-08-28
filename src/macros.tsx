@@ -1,4 +1,4 @@
-import { Def, Index, R } from "../deps.ts";
+import { Def, Div, Index, R } from "../deps.ts";
 import { Access, Span } from "../deps.ts";
 import { Expression, Expressions, M } from "../deps.ts";
 
@@ -308,4 +308,44 @@ export function Turbo15({ children }: { children: Expressions}): Expression {
 
 export function Turbo16({ children }: { children: Expressions}): Expression {
   return <Turbo color="900C00"><exps x={children} /></Turbo>
+}
+
+export type Box = {
+  isChunk: boolean,
+  content: Expressions,
+}
+
+export type BoxStatus = "done" // client used this value and can now discard it
+  | "unve" // unverified data the client will need in the future
+  | "veri" // verified data the client will need in the future
+  | "miss"; // data not yet received by the client
+
+export function VisualizeVerification({ boxes, states, compact }: { boxes: Box[], states: BoxStatus[][], compact?: boolean}): Expression {
+  const rows: Expression[] = [];
+
+  for (const stateRow of states) {
+    rows.push(<Div clazz={`clientStateRow${compact ? " compact" : ""}`}><VisualizeVerificationRow boxes={boxes} stateRow={stateRow}/></Div>);
+  }
+
+  return <exps x={rows}/>;
+}
+
+function VisualizeVerificationRow({ boxes, stateRow }: { boxes: Box[], stateRow: BoxStatus[]}): Expression {
+  return <impure fun={(ctx) => {
+    if (stateRow.length != boxes.length) {
+      ctx.log("Found stateRow with different length than the number of boxes.");
+      ctx.halt();
+    }
+  
+    const renderedBoxes: Expression[] = [];
+
+    stateRow.forEach((status, i) => {
+      const content: Expression = boxes[i].isChunk ?
+        <exps x={boxes[i].content}/> :
+        <><M>{`\\mathtt{lbl}(`}</M><exps x={boxes[i].content}/><M>{`)`}</M></>;
+      renderedBoxes.push(<Div clazz={`clientStateBox ${status} ${boxes[i].isChunk ? "chunk" : "label"}`}>{content}</Div>);
+    });
+  
+    return <exps x={renderedBoxes}/>;
+  }}/>;
 }
