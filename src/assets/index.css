@@ -251,6 +251,12 @@ li {
   margin-left: var(--default-spacing);
 }
 
+blockquote {
+  border-left: solid 3px var(--main-subtle);
+  padding: 1px 0.5em 1px 1em;
+  background-color: #eee;
+}
+
 img {
   width: 100%;
   height: auto;

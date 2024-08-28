@@ -116,7 +116,7 @@ import {
 } from "./macros.tsx";
 import { TreeItems } from "./macros.tsx";
 import { GeoDistribution } from "./macros.tsx";
-import { Access, ApplicationRaw, Assign, AssignRaw, CommentLine, DefField, DefFunction, DefType, FunctionItemUntyped, Gte, Hr, Rb } from "../deps.ts";
+import { Access, ApplicationRaw, Assign, AssignRaw, Blockquote, CommentLine, DefField, DefFunction, DefType, FunctionItemUntyped, Gte, Hr, Rb } from "../deps.ts";
 
 const ctx = new Context();
 
@@ -188,7 +188,7 @@ const exp = (
       </P>
 
       <P>
-        When strings are hashed with Bab, servers embed into the data stream efficiently verifiable proofs that the data they have sent so far is indeed part of the requested string. More specifically, Bab enables the following features (all of which will be explained in detail in <Rc n="requests"/>):
+        When strings are hashed with Bab, servers embed into the data stream efficiently verifiable proofs that the data they have sent so far is indeed part of the requested string. More specifically, Bab enables the following features (all of which will be explained in detail in <Rc n="rationale"/>):
       </P>
 
       <Ul>
@@ -236,7 +236,7 @@ const exp = (
         <PreviewScope>
           <P>
             The <DefFunction n="hash_chunk"/> function determines the labels of the leaf nodes of Bab’s Merkle-tree.
-            It must be a function that maps a triplet of a <R n="chunk"/>, a chunk index (a natural number between zero and <Code>ceil(<M>2^<Curly>64</Curly> - 1</M>, <R n="chunk_size"/>)</Code>), and a boolean flag (whether the node is the root node or not) to bytestrings of <R n="width"/> bytes.
+            It must be a function that maps a <R n="chunk"/> and a boolean flag (whether the node is the root node or not) to a bytestring of <R n="width"/> bytes.
           </P>
         </PreviewScope>
 
@@ -277,11 +277,11 @@ const exp = (
           </P>
 
           <P>
-            If <R n="lblv"/> is a leaf vertex corresponding to the <DefValue n="lbl_leaf_i" r="i"/>-th <R n="chunk"/> (zero-indexed) <DefValue n="lbl_leaf_c" r="c"/>, then <Application fun="lbl" args={[<R n="lblv"/>]}/> is <Application fun="hash_chunk" args={[<R n="lbl_leaf_c"/>, <R n="lbl_leaf_i"/>, "true"]}/> if <R n="lbl_leaf_c"/> is the <Em>only</Em> <R n="chunk"/> in <R n="chunks"/>, and <Application fun="hash_chunk" args={[<R n="lbl_leaf_c"/>, <R n="lbl_leaf_i"/>, "false"]}/>, otherwise.
+            If <R n="lblv"/> is a leaf vertex corresponding to some <R n="chunk"/> <DefValue n="lbl_leaf_c" r="c"/>, then <Application fun="lbl" args={[<R n="lblv"/>]}/> is <Application fun="hash_chunk" args={[<R n="lbl_leaf_c"/>, <M>\top</M>]}/> if <R n="lbl_leaf_c"/> is the <Em>only</Em> <R n="chunk"/> in <R n="chunks"/>, and <Span clazz="nowrap"><Application fun="hash_chunk" args={[<R n="lbl_leaf_c"/>, <M>\bot</M>]}/></Span>, otherwise.
           </P>
 
           <P>
-            If <R n="lblv"/> is an inner vertex, let <DefValue n="lbl_inner_l" r="left"/> denote its left child, let <DefValue n="lbl_inner_r" r="right"/> denote its right child, let <DefValue n="lbl_inner_len" r="len"/> denote the total length of the <Rs n="chunk"/> corresponding to all leaf descendents of <R n="lblv"/>, and let <DefValue n="lbl_inner_is_root" r="is_root"/> be <Code>true</Code> if and only if <R n="lblv"/> is the root of the tree.
+            If <R n="lblv"/> is an inner vertex, let <DefValue n="lbl_inner_l" r="left"/> denote its left child, let <DefValue n="lbl_inner_r" r="right"/> denote its right child, let <DefValue n="lbl_inner_len" r="len"/> denote the total length of the <Rs n="chunk"/> corresponding to all leaf descendents of <R n="lblv"/>, and let <DefValue n="lbl_inner_is_root" r="is_root"/> be <M>\top</M> if <R n="lblv"/> is the root of the tree and <M>\bot</M> otherwise.
             Then <Application fun="lbl" args={[<R n="lblv"/>]}/> is <Application fun="hash_inner" args={[<R n="lbl_inner_l"/>, <R n="lbl_inner_r"/>, <R n="lbl_inner_len"/>, <R n="lbl_inner_is_root"/>]}/>.
           </P>
         </PreviewScope>
@@ -312,14 +312,14 @@ const exp = (
 
       <Hsection n="instantiations" title="Instantiations">
         <P>
-          The choice of parameters for using Bab is open, but some care needs to be taken to create a secure (i.e., collision-resistant and preimage-resistant) hash function. <R n="hash_chunk"/> and <R n="hash_inner"/> must be secure hash functions themselves, and it must further be impossible to find an input to <R n="hash_chunk"/> and one to <R n="hash_inner"/> such that both yield the same digest.
+          The choice of parameters for using Bab is flexible, but some care needs to be taken to create a secure (i.e., collision-resistant and preimage-resistant) hash function. <R n="hash_chunk"/> and <R n="hash_inner"/> must be secure hash functions themselves, and it must further be impossible to find an input to <R n="hash_chunk"/> and one to <R n="hash_inner"/> such that both yield the same digest. Instantiations may let <R n="hash_inner"/> ignore the length argument without compromising collision-resistance or preimage-resistance, at the cost of losing efficient string length proofs (see <Rc n="length_verification"/> for details).
         </P>
 
         <P>
           We supply two useful instantiations: one based on arbitrary secure hash functions, and a more efficient one that closely mimics Blake3.
         </P>
 
-        <Hsection n="instantiations_from_secure" title="Via Conventional Hash Function">
+        <Hsection n="instantiations_from_secure" title="Via Conventional Hash Functions">
           <PreviewScope>
             <P>
               Given a conventional, secure hash function <DefFunction n="conv_h" r="h"/> of digest size <DefValue n="conv_width" r="w"/>, we can instantiate Bab for a <R n="width"/> of <R n="conv_width"/> and an arbitrary <R n="chunk_size"/>.
@@ -330,9 +330,6 @@ const exp = (
                 <Ul>
                   <Li>
                     the byte <Code>0x00</Code> if <R n="conv_chunk_root"/> is <Code>false</Code>, or the byte <Code>0x01</Code> otherwise,
-                  </Li>
-                  <Li>
-                    <R n="conv_chunk_i"/> encoded as an unsigned big-endian 64-bit integer, and
                   </Li>
                   <Li>
                     <R n="conv_chunk_chunk"/>.
@@ -363,11 +360,19 @@ const exp = (
         <Hsection n="instantiations_william" title="William3">
           <PreviewScope>
             <P>
-              <DefFunction n="william3" r="William3" rb="William3"/> is a Bab instantiation that is almost identical to Blake3. The only difference is that <R n="william3"/> incorporates a length value into the label computation of inner tree vertices. <Rb n="william3"/> has a normal hash mode and a keyed hash mode (based on a 256 bit key); unlike Blake3 it does not support a key derivation mode.
+              <DefFunction n="william3" r="William3" rb="William3"/> is a Bab instantiation that is almost identical to Blake3. There are only two differences: <R n="william3"/> does not supply chunk indices into the label computation for chunks, and <R n="william3"/> incorporates a length value into the label computation of inner tree vertices. <Rb n="william3"/> has a normal hash mode and a keyed hash mode (based on a 256 bit key); unlike Blake3 it does not support a key derivation mode.
             </P>
 
             <P>
-              <Rb n="william3"/> uses a <R n="chunk_size"/> of 1024 bytes (just like Blake3). Its <R n="width"/> is 32 bytes (just like Blake3). The <R n="hash_chunk"/> function is identical to the Blake3 computation of <Em>chunk chaining values</Em>. The <R n="hash_inner"/> function is almost identical to the Blake3 computation of <Em>parent node chaining values</Em>, with a single exception: whereas Blake3 sets the <Code>t</Code> parameter of its compression function to 0, <R n="william3"/> sets <Code>t</Code> to the third argument (the length value) of <R n="hash_chunk"/> (as an unsigned <Em>little</Em>-endian 64-bit integer).
+              <Rb n="william3"/> uses a <R n="chunk_size"/> of 1024 bytes (just like Blake3). Its <R n="width"/> is 32 bytes (just like Blake3).
+            </P>
+
+            <P>
+              The <R n="hash_chunk"/> function is almost identical to the Blake3 computation of <Em>chunk chaining values</Em>, with a single exception<Marginale>Explained in <Rc n="chunk_indices"/>.</Marginale>: where Blake sets the <Code>t</Code> parameter of its compression function to the chunk index, <R n="william3"/> sets it to 0.
+            </P>
+
+            <P>
+              The <R n="hash_inner"/> function also is almost identical to the Blake3 computation of <Em>parent node chaining values</Em>, with a single exception<Marginale>Explained in <Rc n="length_verification"/>.</Marginale>: whereas Blake3 sets the <Code>t</Code> parameter of its compression function to 0, <R n="william3"/> sets <Code>t</Code> to the third argument (the length value) of <R n="hash_chunk"/> (as an unsigned <Em>little</Em>-endian 64-bit integer).
             </P>
           </PreviewScope>
         </Hsection>
@@ -376,12 +381,12 @@ const exp = (
 
     <Hsection n="rationale" title="Design Rationale">
       <P>
-        We now explain the decisions that went into the definition of the Bab hash function.
+        We now explain the decisions that went into the definition of the Bab hash function.<Marginale>Bab is heavily based off Blake3 and Bao, so many of these rationales are restating the design work that went into Blake3 and Bao. Compared to those two, only little creativity went into the design of Bab.</Marginale>
       </P>
 
       <Hsection n="streaming_verification" title="Streaming Verification">
         <P>
-          Using the root label of a Merkle-tree as the digest opens up the option of incrementally verifying a string as it is being received as belonging to the requested hash. To do so, the transmission of each chunk is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to the chunk. As an optimization, each label is transmitted at most once; it is the receiver’s responsibility to cache labels until they are not needed for verification any longer. At the very start of the transmission, the length of the string has to be sent. 
+          Using the root label of a Merkle-tree as the digest opens up the option of incrementally verifying a string as it is being received as belonging to the requested hash. To do so, the transmission of each chunk is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. As an optimization, each label is transmitted at most once; it is the receiver’s responsibility to cache labels until they are not needed for verification any longer. At the very start of the transmission, the length of the string has to be sent. 
         </P>
 
         <P>
@@ -424,7 +429,7 @@ const exp = (
           }
         >
           <P>
-            <Sidenote note="The length of the original string in bytes."><Code>11</Code></Sidenote>, <Turbo1><Application fun="lbl" args={["2"]}/></Turbo1>, <Turbo2><Application fun="lbl" args={["9"]}/></Turbo2>, <Turbo3><Application fun="lbl" args={["3"]}/></Turbo3>, <Turbo4><Application fun="lbl" args={["6"]}/></Turbo4>, <Turbo5><Application fun="lbl" args={["4"]}/></Turbo5>, <Turbo6><Application fun="lbl" args={["5"]}/></Turbo6>, <Turbo7><Code>he</Code></Turbo7>, <Turbo8><Code>ll</Code></Turbo8>, <Turbo9><Application fun="lbl" args={["8"]}/></Turbo9>, <Turbo10><Application fun="lbl" args={["8"]}/></Turbo10>, <Turbo11><Code>o_</Code></Turbo11>, <Turbo12><Code>wo</Code></Turbo12>, <Turbo13><Application fun="lbl" args={["10"]}/></Turbo13>, <Turbo14><Application fun="lbl" args={["11"]}/></Turbo14>, <Turbo15><Code>rl</Code></Turbo15>, <Turbo16><Code>d</Code></Turbo16>.
+            <Sidenote note="The length of the original string in bytes."><Code>11</Code></Sidenote>, <Turbo1><Application fun="lbl" args={["2"]}/></Turbo1>, <Turbo2><Application fun="lbl" args={["9"]}/></Turbo2>, <Turbo3><Application fun="lbl" args={["3"]}/></Turbo3>, <Turbo4><Application fun="lbl" args={["6"]}/></Turbo4>, <Turbo5><Application fun="lbl" args={["4"]}/></Turbo5>, <Turbo6><Application fun="lbl" args={["5"]}/></Turbo6>, <Turbo7><Code>he</Code></Turbo7>, <Turbo8><Code>ll</Code></Turbo8>, <Turbo9><Application fun="lbl" args={["7"]}/></Turbo9>, <Turbo10><Application fun="lbl" args={["8"]}/></Turbo10>, <Turbo11><Code>o_</Code></Turbo11>, <Turbo12><Code>wo</Code></Turbo12>, <Turbo13><Application fun="lbl" args={["10"]}/></Turbo13>, <Turbo14><Application fun="lbl" args={["11"]}/></Turbo14>, <Turbo15><Code>rl</Code></Turbo15>, <Turbo16><Code>d</Code></Turbo16>.
           </P>
           <Img
             src={<ResolveAsset asset={["graphics", "example_full_stream.svg"]} />}
@@ -435,13 +440,101 @@ const exp = (
 
       <Hsection n="slice_verification" title="Slice Verification">
         <P>
+          The Merkle-tree design allows not only for verifiable streaming of the full string, but also of any slice (of chunks) within. Assume a client wants to receive some number of chunks, starting at some chunk offset. The response data is defined with the same technique as for the full string: the transmission of each chunk is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. Again, each label is transmitted at most once. Since the length of the slice is known to the client, the response need not be prefixed by the length. <Rcb n="fig_stream_slice"/> shows an example of which data needs to be transmitted when the client requests three chunks, starting at offset two (zero-indexed).
+        </P>
 
+        <Fig
+          n="fig_stream_slice"
+          // wrapperTagProps={{clazz: "wide"}}
+          title="Verifiable Slice Streaming Example"
+          caption={
+            <>
+              <P>
+                The vertices of our recurring example tree, each showing the data that they contribute to the data stream that lets a client incrementally verify a slice of three chunks, starting at chunk offset two, in the string <Code>hello_world</Code> .
+              </P>
+              <P>
+                The list of vertices in the order in which they contribute their child labels or chunks now has some gaps, but is still strictly ascending: <M post=".">1, 2, 6, 7, 8, 9, 10</M>
+              </P>
+            </>
+          }
+        >
+          <P>
+            <Turbo1><Application fun="lbl" args={["2"]}/></Turbo1>, <Turbo2><Application fun="lbl" args={["9"]}/></Turbo2>, <Turbo3><Application fun="lbl" args={["3"]}/></Turbo3>, <Turbo4><Application fun="lbl" args={["6"]}/></Turbo4>, <Turbo9><Application fun="lbl" args={["7"]}/></Turbo9>, <Turbo10><Application fun="lbl" args={["8"]}/></Turbo10>, <Turbo11><Code>o_</Code></Turbo11>, <Turbo12><Code>wo</Code></Turbo12>, <Turbo13><Application fun="lbl" args={["10"]}/></Turbo13>, <Turbo14><Application fun="lbl" args={["11"]}/></Turbo14>, <Turbo15><Code>rl</Code></Turbo15>.
+          </P>
+          <Img
+            src={<ResolveAsset asset={["graphics", "example_slice_stream.svg"]} />}
+            alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the verified data stream."
+          />
+        </Fig>
+      </Hsection>
+
+      <Hsection n="length_verification" title="Length Verification">
+        <P>
+          A server can provide a proof of bounded size for the length of any string to a client who already has the digest of that string. If the string fits into a single <R n="chunk"/>, the proof simply is that chunk itself (the client can reconstruct the digest and assert that it matches). If the string is longer than a single <R n="chunk"/>, then the root of the Merkle tree is an inner node. The server can then supply the length of the string together with the labels of the left and right children of the root. The client feeds these into <R n="hash_inner"/> and asserts that the result matches the digest.
+        </P>
+
+        <P>
+          Blake3 does <Em>not</Em> incorporate lengths into the computation of inner vertex labels, this is the major point of divergence between Blake3 and Bab. Blake3 still supports length proofs, these consist of the length followed by the same data as a reply to a slice request for only the final chunk. Such a proof always contains at least a full chunk, plus twice the height of the tree in labels. For a moderately short string (say, 4096 bytes), the length proof via Blake3 has a size of <M>8 + 2*2*32 + 1024 = 1160</M> bytes. A William3 lenght proof, in comparison, requires <M>2 * 32 + 8 = 72</M> bytes, even for longer strings.
+        </P>
+
+        <P>
+          A Bab instantiation can choose to simply ignore the length argument in <R n="hash_inner"/>. This can simplify the implementation, and comes at the cost of loosing constant-size length proofs. Such an instantiation can still use the same technique as Blake for logarithmically-sized length proofs of supplying the length followed by the verification data for a slice consisting of the final chunk of the string.
+        </P>
+
+        <P>
+          For length proofs, it technically suffices to factor the length only into the computation of the root label, but ignore it in the computation of non-root inner labels. Bab opts for the slightly more simple specification that does not introduce this special case. Bab can still be instantiated to this effect, however: since <R n="hash_inner"/> takes an <Code>is_root</Code> flag as an argument, an instantiation can choose to only factor the length into the label computation if <Code>is_root</Code> is <Code>true</Code>. William3 incorporates the length into all node primarily for <Sidenote note={<>
+            Although it would be possible to implement root-only length-incorporation in a branchless manner: treat <Code>is_root</Code> as a number (either zero or one), and multiply the length with that number before incorporating it. 
+          </>}>simplicity</Sidenote>.
         </P>
       </Hsection>
 
-      <Hsection n="details" title="Details">
+      <Hsection n="why_is_root" title="The is_root Flag">
         <P>
-          <Alj inline>TODO justify: chunks instead of individual bytes, chunk offset in hash_chunk, is_root flag in hash_chunk and hash_inner, lenght in (each) hash_inner, choice of merkle dag.</Alj>
+          Both <R n="hash_chunk"/> and <R n="hash_inner"/> take a boolean <Code>is_root</Code> flag as an argument. This flag <Em>must</Em> influence the output to guard against <A href="https://en.wikipedia.org/wiki/Length_extension_attack">length extension attacks</A>. The flag ensures <Bib item="bertoni2014sufficient">final-node separability</Bib> (called <Quotes>subtree-freeness</Quotes> by the Blake3 authors), which prevents length extension attacks.
+        </P>
+      </Hsection>
+
+      <Hsection n="chunk_indices" title="No Chunk Indices">
+        <P>
+          Blake3 incorporates the index of each <R n="chunk"/> when computing its label in the Merkle-tree. Bab does not. The authors of Blake3 give a clear justification for why they added chunk indices:<Marginale>See the <A href="https://raw.githubusercontent.com/BLAKE3-team/BLAKE3-specs/master/blake3.pdf#section.7">Blake3 paper, section 7.5</A>.</Marginale>
+        </P>
+
+        <Blockquote>
+          <P>
+            We [...] use the <Code>t</Code> parameter during the input phase, to indicate the chunk number. This means that each chunk has a distinct <Sidenote note={<><Quotes>Chaining Value</Quotes>, their terminology for Merkle-tree labels.</>}>CV</Sidenote> with high probability, even if two chunks have the same input bytes. This is not strictly necessary for security, but it discourages a class of dangerous optimizations.
+          </P>
+
+          <P>
+            Consider an application that hashes sparse files, which are mostly filled with zeros. The majority of this application’s input chunks could be the all-zero chunk. This application might try to compute the CV of the zero chunk only once, and then check each chunk before compressing it to see whether it can use that precomputed CV. This check is cheap, and for this application it could be a big speedup. But this optimization is dangerous, because it is not constant-time. The runtime of the hash function would leak information about its input.
+          </P>
+
+          <P>
+            If tricks like this were possible, an unsafe implementation would inevitably find its way into some privacy-sensitive use case. By distinguishing each chunk, BLAKE3 deliberately sabotages these tricks, in the hopes of keeping every implementation constant-time.
+          </P>
+        </Blockquote>
+
+        <P>
+          Bab is decidedly <Em>not</Em> a general-purpose hash function. It has no ambition to be used as a building block in, say, a digital signature scheme. Hence, we see little value in adding complexity just to deter a certain class of implementation techniques.
+        </P>
+      </Hsection>
+
+      <Hsection n="binary_tree" title="Binary Tree">
+        <P>
+          Binary trees are not the only candidate digraphs as the merkelization backbone. Some other candidate constructions include ternary trees (which are more efficient than binary trees <A href="https://en.wikipedia.org/wiki/Optimal_radix_choice#Ternary_tree_efficiency">in some applications</A>) and <A href="https://aljoscha-meyer.de/reed/">efficient binary linking schemes</A>. However, for verified streaming, binary trees turn out to be more efficient.
+        </P>
+
+        <P>
+          Interestingly enough, the humble linked list, aka hash chain, has some intriguing properties. If the Merkle-DAG was a linked list where the label of the second chunk incorporates the label of the first chunk, the label of the third chunk that of the second, and so on, verified streaming could be done without sending <Em>any</Em> internal labels — by sending chunks in reverse order. Unfortunately, the worst-case size of slice verification proofs would be linear in the size of the tree. This dilemma is similar to that encountered in <A href="https://aljoscha-meyer.de/reed/assets/references/meyer2023sok.pdf">secure timestamping and related problems</A>. Secure relative timestamping solves a more difficult problem than verified streaming, hence its solution are less efficient than a simple binary Merkle tree.
+        </P>
+
+        <P>
+          Also note that the Merkle tree structure allows for easy parallelization of hash computation, whereas a linked list (or any linking scheme) completely precludes parallelization.
+        </P>
+      </Hsection>
+
+      <Hsection n="chunk_size_concerns" title="Chunk Size">
+        <P>
+          Bab leaves the <R n="chunk_size"/> as a freely choosable parameter, because different values incur different tradeoffs. At the most basic, a larger <R n="chunk_size"/> shrinks the Merkle tree and thus reduces the metadata overhead in verified streaming, but it also increases the amount of data that needs to be read in sequence without being able to verify it immediately. The <R n="chunk_size"/> also serves as an upper bound to the size of proofs of string length in Bab. Finally, the chunk size also affects the performance of computing strings, see the discussion in <A href="https://raw.githubusercontent.com/BLAKE3-team/BLAKE3-specs/master/blake3.pdf#section.7">the Blake3 paper</A>.
         </P>
       </Hsection>
     </Hsection>
