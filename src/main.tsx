@@ -156,6 +156,21 @@ const Definition = makeFigureMacro(ctx, {
   isTheoremLike: true,
 });
 
+const exampleBoxes = [
+  {isChunk: false, content: "1", x: 0, y: 0, children: [2, 9]},
+  {isChunk: false, content: "2", x: -2, y: 1, children: [3, 6]}, {isChunk: false, content: "9", x: 2, y: 1, children: [10, 11]},
+  {isChunk: false, content: "3", x: -3, y: 2, children: [4, 5]}, {isChunk: false, content: "6", x: -1, y: 2, children: [7, 8]},
+  {isChunk: false, content: "4", x: -3.5, y: 3, children: [4]}, {isChunk: false, content: "5", x: -2.5, y: 3, children: [5]},
+  {isChunk: true, content: "he", x: -3.5, y: 3, children: []},
+  {isChunk: true, content: "ll", x: -2.5, y: 3, children: []},
+  {isChunk: false, content: "7", x: -1.5, y: 3, children: [7]}, {isChunk: false, content: "8", x: -0.5, y: 3, children: [8]},
+  {isChunk: true, content: "o_", x: -1.5, y: 3, children: []},
+  {isChunk: true, content: "wo", x: -0.5, y: 3, children: []},
+  {isChunk: false, content: "10", x: 1, y: 2, children: [10]}, {isChunk: false, content: "11", x: 3, y: 2, children: [11]},
+  {isChunk: true, content: "rl", x: 1, y: 2, children: []},
+  {isChunk: true, content: "d", x: 3, y: 2, children: []},
+];
+
 // The full input to Macromania is a single expression, which we then evaluate.
 const exp = (
   <ArticleTemplate
@@ -387,31 +402,7 @@ const exp = (
 
       <Hsection n="streaming_verification" title="Streaming Verification">
         <P>
-          Using the root label of a Merkle-tree as the digest opens up the option of incrementally verifying a string as it is being received as belonging to the requested hash. To do so, the transmission of each chunk is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. As an optimization, each label is transmitted at most once; it is the receiver’s responsibility to cache labels until they are not needed for verification any longer. At the very start of the transmission, the length of the string has to be sent. 
-        </P>
-
-        <P>
-          As an example, consider again <Rc n="fig_tree_labeled"/>. To stream the string <Code>hello_world</Code> and allow a receiving client to verify data integrity along the way, a server first sends the length of the string (11 bytes), followed by the labels of the left and right children of the root (<Application fun="lbl" args={["2"]}/> and <Application fun="lbl" args={["9"]}/>). When the client receives those labels, it can feed them into <R n="hash_inner"/>, to verify that the result equals the original digest (i.e., the root label). If the Bab instantiation is secure, then the server cannot possibly have fabricated these values — the two supplied values must indeed have been labels of the Merkle tree.
-        </P>
-
-        <P>
-          Having transmitted the labels of the left and right children of the root, the data stream continues with the labels of the left and right children of the next vertex on the path from the root to the first chunk: that vertex is <M>2</M>, so the transmitted labels are <Application fun="lbl" args={["3"]}/> and <Application fun="lbl" args={["6"]}/>. The client can then verify that feeding them into <R n="hash_inner"/> yields the (already verified) label of vertex <M>2</M>. Next in the stream, vertex <M>3</M> contributes its two child labels, which are again verified.
-        </P>
-
-        <P>
-          Next, the stream contains the raw chunk corresponding to vertex <M>4</M>: <Code>he</Code>. The client puts that data (and its chunk index) into <R n="hash_chunk"/>, to verify that it indeed yields the previously transmitted label of vertex <M>4</M>.
-        </P>
-
-        <P>
-          The next chunk to verify corresponds to vertex <M>5</M>, so now we need the labels of all children of the inner vertices on the path from the root to vertex <M>5</M>. All of these vertices (<M>1, 2, 3</M>) have <Em>already</Em> contributed their child labels earlier in the response stream, so all of those are skipped. The next bit of data in the stream is the second chunk: <Code>ll</Code>.
-        </P>
-
-        <P>
-          The third chunk is slightly more interesting: on the path from the root to it (<M>1, 2, 6, 7</M>), the final <Em>two</Em> vertices have not contributed yet. Hence, the stream resumes with the labels of the children of vertex <M>6</M>, followed by the chunk corresponding to vertex <M>7</M>: <Code>o_</Code>.
-        </P>
-
-        <P>
-          The response stream continues in this fashion; <Rc n="fig_stream"/> visualizes and lists the full stream:
+          Using the root label of a Merkle-tree as the digest opens up the option of incrementally verifying a string as it is being received as belonging to the requested hash. To do so, the transmission of each chunk is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. As an optimization, each label is transmitted at most once; it is the receiver’s responsibility to cache labels until they are not needed for verification any longer. At the very start of the transmission, the length of the string has to be sent. <Rcb n="fig_stream"/> visualizes and lists an example stream:
         </P>
 
         <Fig
@@ -437,6 +428,85 @@ const exp = (
             alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the verified data stream."
           />
         </Fig>
+
+        <P>
+          The client can verify the stream by eargerly reconstructing the labels of tree nodes and asserting that the computed labels match the received data. You can go through the verification process for the example stream step by step below. Each step consists of reading either a full label or a full chunk from the stream. The graphic shows the Merkle tree and indicates for each node the knowledge that the client has about it: dim if the client has not yet received any data concerning it, shaded orange if the client has received data that it will need later but cannot verify yet, green if it could verify the data and needs to keep it for verification of subsequent data, and gray if it has verified the data and does not need it for any future computation either.
+        </P>
+
+        <Div clazz="wide">
+          <VisualizeVerification
+            slidesId="exVeriDefault"
+            compact
+            layers={4}
+            boxes={exampleBoxes}
+            steps={[
+              {
+                boxStatuses: ["veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [{trusted: 1}],
+              },
+              {
+                boxStatuses: ["done", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: false, resultsIn: 1, left: 2, right: 9, len: 11, isRoot: true}],
+              },
+              {
+                boxStatuses: ["done", "veri", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: false, resultsIn: 2, left: 3, right: 6, len: 8}],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "veri", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "veri", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: false, resultsIn: 3, left: 4, right: 5, len: 4}],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "veri", "done", "veri", "done", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: true, index: 4, content: "he"}],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "veri", "done", "done", "done", "done", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: true, index: 5, content: "ll"}],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "veri", "done", "done", "done", "done", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: false, resultsIn: 6, left: 7, right: 8, len: 4}],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "done", "veri", "done", "miss", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: true, index: 6, content: "o_"}],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: true, index: 7, content: "wo"}],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "unve", "miss", "miss", "miss"],
+                computations: [],
+              },
+              {
+                boxStatuses: ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "veri", "veri", "miss", "miss"],
+                computations: [{isChunk: false, resultsIn: 9, left: 10, right: 11, len: 3}],
+              },
+              {
+                boxStatuses: ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "veri", "done", "miss"],
+                computations: [{isChunk: true, index: 10, content: "rl"}],
+              },
+              {
+                boxStatuses: ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done"],
+                computations: [{isChunk: true, index: 11, content: "d"}],
+              },
+            ]}
+          />
+        </Div>
       </Hsection>
 
       <Hsection n="slice_verification" title="Slice Verification">
@@ -467,6 +537,65 @@ const exp = (
             alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the verified data stream."
           />
         </Fig>
+
+        <P>
+          You can step through this example verification process below:
+        </P>
+
+        <Div clazz="wide">
+          <VisualizeVerification
+            slidesId="exVeriSliceDefault"
+            layers={4}
+            boxes={exampleBoxes}
+            skipping={[5, 6, 7, 8, 16]}
+            steps={[
+              {
+                boxStatuses: ["veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [{trusted: 1}],
+              },
+              {
+                boxStatuses: ["done", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: false, resultsIn: 1, left: 2, right: 9, len: 11, isRoot: true}],
+              },
+              {
+                boxStatuses: ["done", "veri", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: false, resultsIn: 2, left: 3, right: 6, len: 8}],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "veri", "miss", "miss", "miss", "miss", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "done", "miss", "miss", "miss", "miss", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: false, resultsIn: 6, left: 7, right: 8, len: 4}],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "done", "miss", "miss", "miss", "miss", "done", "veri", "done", "miss", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: true, index: 7, content: "o_"}],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "done", "miss", "miss", "miss", "miss", "done", "done", "done", "done", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: true, index: 8, content: "wo"}],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "done", "miss", "miss", "miss", "miss", "done", "done", "done", "done", "unve", "miss", "miss", "miss"],
+                computations: [],
+              },
+              {
+                boxStatuses: ["done", "done", "done", "done", "done", "miss", "miss", "miss", "miss", "done", "done", "done", "done", "veri", "done", "miss", "miss"],
+                computations: [{isChunk: false, resultsIn: 9, left: 10, right: 11, len: 3}],
+              },
+              {
+                boxStatuses: ["done", "done", "done", "done", "done", "miss", "miss", "miss", "miss", "done", "done", "done", "done", "done", "done", "done", "miss"],
+                computations: [{isChunk: true, index: 10, content: "rl"}],
+              },
+            ]}
+          />
+        </Div>
       </Hsection>
 
       <Hsection n="length_verification" title="Length Verification">
@@ -545,93 +674,7 @@ const exp = (
         <Alj inline>TODO</Alj>
       </P>
 
-      <Div clazz="wide">
-        <VisualizeVerification
-          slidesId="exVeriDefault"
-          compact
-          layers={4}
-          boxes={[
-            {isChunk: false, content: "1", x: 0, y: 0, children: [2, 9]},
-            {isChunk: false, content: "2", x: -2, y: 1, children: [3, 6]}, {isChunk: false, content: "9", x: 2, y: 1, children: [10, 11]},
-            {isChunk: false, content: "3", x: -3, y: 2, children: [4, 5]}, {isChunk: false, content: "6", x: -1, y: 2, children: [7, 8]},
-            {isChunk: false, content: "4", x: -3.5, y: 3, children: [4]}, {isChunk: false, content: "5", x: -2.5, y: 3, children: [5]},
-            {isChunk: true, content: "he", x: -3.5, y: 3, children: []},
-            {isChunk: true, content: "ll", x: -2.5, y: 3, children: []},
-            {isChunk: false, content: "7", x: -1.5, y: 3, children: [7]}, {isChunk: false, content: "8", x: -0.5, y: 3, children: [8]},
-            {isChunk: true, content: "o_", x: -1.5, y: 3, children: []},
-            {isChunk: true, content: "wo", x: -0.5, y: 3, children: []},
-            {isChunk: false, content: "10", x: 1, y: 2, children: [10]}, {isChunk: false, content: "11", x: 3, y: 2, children: [11]},
-            {isChunk: true, content: "rl", x: 1, y: 2, children: []},
-            {isChunk: true, content: "d", x: 3, y: 2, children: []},
-          ]}
-          steps={[
-            {
-              boxStatuses: ["veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              computations: [{trusted: 1}],
-            },
-            {
-              boxStatuses: ["done", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              computations: [{isChunk: false, resultsIn: 1, left: 2, right: 9, len: 11, isRoot: true}],
-            },
-            {
-              boxStatuses: ["done", "veri", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              computations: [],
-            },
-            {
-              boxStatuses: ["done", "done", "veri", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              computations: [{isChunk: false, resultsIn: 2, left: 3, right: 6, len: 8}],
-            },
-            {
-              boxStatuses: ["done", "done", "veri", "veri", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              computations: [],
-            },
-            {
-              boxStatuses: ["done", "done", "veri", "done", "veri", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              computations: [{isChunk: false, resultsIn: 3, left: 4, right: 5, len: 4}],
-            },
-            {
-              boxStatuses: ["done", "done", "veri", "done", "veri", "done", "veri", "done", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              computations: [{isChunk: true, index: 4, content: "he"}],
-            },
-            {
-              boxStatuses: ["done", "done", "veri", "done", "veri", "done", "done", "done", "done", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              computations: [{isChunk: true, index: 5, content: "ll"}],
-            },
-            {
-              boxStatuses: ["done", "done", "veri", "done", "veri", "done", "done", "done", "done", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              computations: [],
-            },
-            {
-              boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss"],
-              computations: [{isChunk: false, resultsIn: 6, left: 7, right: 8, len: 4}],
-            },
-            {
-              boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "done", "veri", "done", "miss", "miss", "miss", "miss", "miss"],
-              computations: [{isChunk: true, index: 6, content: "o_"}],
-            },
-            {
-              boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "miss", "miss", "miss", "miss"],
-              computations: [{isChunk: true, index: 7, content: "wo"}],
-            },
-            {
-              boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "unve", "miss", "miss", "miss"],
-              computations: [],
-            },
-            {
-              boxStatuses: ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "veri", "veri", "miss", "miss"],
-              computations: [{isChunk: false, resultsIn: 9, left: 10, right: 11, len: 3}],
-            },
-            {
-              boxStatuses: ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "veri", "done", "miss"],
-              computations: [{isChunk: true, index: 10, content: "rl"}],
-            },
-            {
-              boxStatuses: ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done"],
-              computations: [{isChunk: true, index: 11, content: "d"}],
-            },
-          ]}
-        />
-      </Div>
+      
 
         {/* <Fig
           n="fig_buffering_free"

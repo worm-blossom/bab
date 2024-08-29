@@ -348,12 +348,12 @@ const scaleX = 4;
 const scaleY = 5;
 const chunkTransmissionOffset = 0.5
 
-export function VisualizeVerification({ slidesId, boxes, steps, compact, layers }: { slidesId: string, boxes: Box[], steps: VerificationStep[], compact?: boolean, layers: number}): Expression {
+export function VisualizeVerification({ slidesId, boxes, steps, compact, layers, skipping = [] }: { slidesId: string, boxes: Box[], steps: VerificationStep[], compact?: boolean, layers: number, skipping?: number[]}): Expression {
   const rows: Expression[] = [];
 
   steps.forEach((step, i) => {
     rows.push(<>
-      <Div clazz={`clientStateRow${compact ? " compact" : ""}`}><VisualizeVerificationRow boxes={boxes} stateRow={step.boxStatuses}/></Div>
+      <Div clazz={`clientStateRow${compact ? " compact" : ""}`}><VisualizeVerificationRow boxes={boxes} stateRow={step.boxStatuses} skipping={skipping}/></Div>
       <Div style="display: flex;">
         <Div style="flex-grow: 1;">
           <Div clazz="clientTreeContainer" style={`height: ${(layers + chunkTransmissionOffset) * scaleY}rem;`}>
@@ -371,7 +371,7 @@ export function VisualizeVerification({ slidesId, boxes, steps, compact, layers 
   return <Slides slideshowId={slidesId} slides={rows}/>;
 }
 
-function VisualizeVerificationRow({ boxes, stateRow }: { boxes: Box[], stateRow: BoxStatus[]}): Expression {
+function VisualizeVerificationRow({ boxes, stateRow, skipping }: { boxes: Box[], stateRow: BoxStatus[], skipping: number[]}): Expression {
   return <impure fun={(ctx) => {
     if (stateRow.length != boxes.length) {
       ctx.log("Found stateRow with different length than the number of boxes.");
@@ -381,7 +381,7 @@ function VisualizeVerificationRow({ boxes, stateRow }: { boxes: Box[], stateRow:
     const renderedBoxes: Expression[] = [];
 
     stateRow.forEach((status, i) => {
-      if (i > 0) {
+      if (i > 0 && (skipping.indexOf(i) === -1)) {
         const content: Expression = boxes[i].isChunk ?
           <exps x={boxes[i].content}/> :
           <><M>{`\\mathtt{lbl}(`}</M><exps x={boxes[i].content}/><M>{`)`}</M></>;
@@ -421,9 +421,9 @@ function RenderComputations({ steps, stepIndex }: { steps: VerificationStep[], s
   return <impure fun={(ctx) => {
     const renderedComputations: Expression[] = [];
 
-    for (let i = 0; i <= stepIndex; i++) {
+    for (let i = 0; i < steps.length; i++) {
       for (const comp of steps[i].computations) {
-        renderedComputations.push(<RenderComputation old={i < stepIndex} comp={comp}/>);
+        renderedComputations.push(<RenderComputation old={i < stepIndex} future={i > stepIndex} comp={comp}/>);
       }
     }
   
@@ -431,7 +431,7 @@ function RenderComputations({ steps, stepIndex }: { steps: VerificationStep[], s
   }}/>;
 }
 
-function RenderComputation({ old, comp }: { old: boolean, comp: Computation}): Expression {
+function RenderComputation({ old, future, comp }: { old: boolean, future: boolean, comp: Computation}): Expression {
   let lhs = -1;
   let op = "is";
   let rhs: Expression = "trusted";
@@ -456,7 +456,7 @@ function RenderComputation({ old, comp }: { old: boolean, comp: Computation}): E
   }
 
 
-  return <Div clazz={`computation${old ? " old" : ""}`}>
+  return <Div clazz={`computation${old ? " old" : ""}${future ? " future" : ""}`}>
     <Application fun="lbl" args={[`${lhs}`]}/> {op} {rhs}
   </Div>;
 }

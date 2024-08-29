@@ -544,7 +544,19 @@ a.bib {
   }
 }
 
-.computation:not(.old) {
+.computation.future {
+  color: #eeeeee;
+
+  .rustic.function {
+    color: #eeeeee;
+  }
+
+  a {
+    text-decoration: none;
+  }
+}
+
+.computation:not(.old):not(.future) {
   background-color: #c0e8ae;
   border-radius: 2px;
 }
