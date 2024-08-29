@@ -79,7 +79,8 @@ p {
   margin: var(--default-spacing) 0;
 }
 
-sub, sup {
+sub,
+sup {
   font-size: .83em;
 }
 
@@ -268,11 +269,13 @@ table {
   border-collapse: collapse;
 }
 
-tr:nth-child(2n), thead {
+tr:nth-child(2n),
+thead {
   background-color: #eeeeee;
 }
 
-td, th {
+td,
+th {
   padding: 2px 0;
   text-align: center;
 }
@@ -454,8 +457,8 @@ a.bib {
   display: inline-block;
   margin: 0.3rem 0.3rem;
   padding: 0 0.3rem;
-  border: 1px solid black;
   border-radius: 2px;
+  border-width: 1px;
 }
 
 .compact .clientStateBox {
@@ -463,13 +466,14 @@ a.bib {
   padding: 0 0.12rem;
 }
 
-.clientStateBox.miss {
+.miss {
   color: #eeeeee;
   border-color: #eeeeee;
+  background-color: var(--main-bg);
   border-style: dashed;
 }
 
-.clientStateBox.unve {
+.unve {
   color: #976803;
   border-color: #976803;
   border-style: dotted;
@@ -478,15 +482,86 @@ a.bib {
   background-size: 40px 40px;
 }
 
-.clientStateBox.veri {
+.veri {
+  border-style: solid;
   color: #034e00;
   border-color: #034e00;
   background-color: #c0e8ae;
 }
 
-.clientStateBox.done {
+.done {
+  border-style: solid;
   color: #5e6f5e;
   border-color: #ececec;
   background-color: #ececec;
-  border-style: solid;
+}
+
+.clientStateNode.done {
+  border-color: #5e6f5e;
+}
+
+.clientStateNode {
+  position: absolute;
+  display: inline-block;
+  padding: 0 0.4rem;
+  border-width: 1px;
+  border-radius: 2px;
+  font-size: 1.2em;
+}
+
+.clientTreeContainer {
+  margin: 0 auto;
+  width: 0px;
+}
+
+.clientTreeComputations {
+  display: inline-block;
+  width: 21em;
+  font-size: 0.8em;
+  padding-top: 2em;
+}
+
+.computation {
+  margin: 0.2em 0;
+}
+
+.computation.old {
+  color: var(--main-subtle);
+
+  .rustic.function {
+    color: var(--main-subtle);
+  }
+}
+
+.computation:not(.old) {
+  box-shadow: 0px 0px 0.5em 0px #c0e8ae;
+}
+
+.treeEdge {
+  border-top: solid 1px rgb(207, 207, 207);
+  position: absolute;
+}
+
+/* Slideshows */
+
+.slider {
+  overflow: hidden;
+}
+
+.slides {
+  display: flex;
+}
+
+.slide {
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.slideNav {
+  display: flex;
+
+  > a {
+    display: block;
+    flex-grow: 1;
+  }
 }

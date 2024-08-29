@@ -116,7 +116,7 @@ import {
 } from "./macros.tsx";
 import { TreeItems } from "./macros.tsx";
 import { GeoDistribution } from "./macros.tsx";
-import { Access, ApplicationRaw, Assign, AssignRaw, Blockquote, CommentLine, DefField, DefFunction, DefType, FunctionItemUntyped, Gte, Hr, Rb } from "../deps.ts";
+import { Access, ApplicationRaw, Assign, AssignRaw, Blockquote, CommentLine, DefField, DefFunction, DefType, Div, FunctionItemUntyped, Gte, Hr, Rb } from "../deps.ts";
 import { VisualizeVerification } from "./macros.tsx";
 
 const ctx = new Context();
@@ -540,60 +540,100 @@ const exp = (
       </Hsection>
     </Hsection>
 
-    <Hsection n="optimizations" title="Optimizations">
+    <Hsection n="optimizations" title="Optimized Streaming Verification">
       <P>
         <Alj inline>TODO</Alj>
       </P>
 
-      <Fig
-          n="fig_buffering_default"
-          wrapperTagProps={{clazz: "wide"}}
-          title="TODO"
-          caption={
-            <>
-              <P>
-                TODO
-              </P>
-            </>
-          }
-        >
-          <VisualizeVerification
-            compact
-            boxes={[
-              {isChunk: false, content: "2"}, {isChunk: false, content: "9"},
-              {isChunk: false, content: "3"}, {isChunk: false, content: "6"},
-              {isChunk: false, content: "4"}, {isChunk: false, content: "5"},
-              {isChunk: true, content: "he"},
-              {isChunk: true, content: "ll"},
-              {isChunk: false, content: "7"}, {isChunk: false, content: "8"},
-              {isChunk: true, content: "o_"},
-              {isChunk: true, content: "wo"},
-              {isChunk: false, content: "10"}, {isChunk: false, content: "11"},
-              {isChunk: true, content: "rl"},
-              {isChunk: true, content: "d"},
-            ]}
-            states={[
-              ["unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["veri", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["done", "veri", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["done", "veri", "veri", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["done", "veri", "done", "veri", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["done", "veri", "done", "veri", "done", "veri", "done", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["done", "veri", "done", "veri", "done", "done", "done", "done", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["done", "veri", "done", "veri", "done", "done", "done", "done", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["done", "veri", "done", "done", "done", "done", "done", "done", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["done", "veri", "done", "done", "done", "done", "done", "done", "done", "veri", "done", "miss", "miss", "miss", "miss", "miss"],
-              ["done", "veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "miss", "miss", "miss", "miss"],
-              ["done", "veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "unve", "miss", "miss", "miss"],
-              ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "veri", "veri", "miss", "miss"],
-              ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "veri", "done", "miss"],
-              ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done"],
-            ]}
-          />
-        </Fig>
+      <Div clazz="wide">
+        <VisualizeVerification
+          slidesId="exVeriDefault"
+          compact
+          layers={4}
+          boxes={[
+            {isChunk: false, content: "1", x: 0, y: 0, children: [2, 9]},
+            {isChunk: false, content: "2", x: -2, y: 1, children: [3, 6]}, {isChunk: false, content: "9", x: 2, y: 1, children: [10, 11]},
+            {isChunk: false, content: "3", x: -3, y: 2, children: [4, 5]}, {isChunk: false, content: "6", x: -1, y: 2, children: [7, 8]},
+            {isChunk: false, content: "4", x: -3.5, y: 3, children: [4]}, {isChunk: false, content: "5", x: -2.5, y: 3, children: [5]},
+            {isChunk: true, content: "he", x: -3.5, y: 3, children: []},
+            {isChunk: true, content: "ll", x: -2.5, y: 3, children: []},
+            {isChunk: false, content: "7", x: -1.5, y: 3, children: [7]}, {isChunk: false, content: "8", x: -0.5, y: 3, children: [8]},
+            {isChunk: true, content: "o_", x: -1.5, y: 3, children: []},
+            {isChunk: true, content: "wo", x: -0.5, y: 3, children: []},
+            {isChunk: false, content: "10", x: 1, y: 2, children: [10]}, {isChunk: false, content: "11", x: 3, y: 2, children: [11]},
+            {isChunk: true, content: "rl", x: 1, y: 2, children: []},
+            {isChunk: true, content: "d", x: 3, y: 2, children: []},
+          ]}
+          steps={[
+            {
+              boxStatuses: ["veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              computations: [{trusted: 1}],
+            },
+            {
+              boxStatuses: ["done", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              computations: [{isChunk: false, resultsIn: 1, left: 2, right: 9, len: 11, isRoot: true}],
+            },
+            {
+              boxStatuses: ["done", "veri", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              computations: [],
+            },
+            {
+              boxStatuses: ["done", "done", "veri", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              computations: [{isChunk: false, resultsIn: 2, left: 3, right: 6, len: 8}],
+            },
+            {
+              boxStatuses: ["done", "done", "veri", "veri", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              computations: [],
+            },
+            {
+              boxStatuses: ["done", "done", "veri", "done", "veri", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              computations: [{isChunk: false, resultsIn: 3, left: 4, right: 5, len: 4}],
+            },
+            {
+              boxStatuses: ["done", "done", "veri", "done", "veri", "done", "veri", "done", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              computations: [{isChunk: true, index: 4, content: "he"}],
+            },
+            {
+              boxStatuses: ["done", "done", "veri", "done", "veri", "done", "done", "done", "done", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              computations: [{isChunk: true, index: 5, content: "ll"}],
+            },
+            {
+              boxStatuses: ["done", "done", "veri", "done", "veri", "done", "done", "done", "done", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+              computations: [],
+            },
+            {
+              boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss"],
+              computations: [{isChunk: false, resultsIn: 6, left: 7, right: 8, len: 4}],
+            },
+            {
+              boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "done", "veri", "done", "miss", "miss", "miss", "miss", "miss"],
+              computations: [{isChunk: true, index: 6, content: "o_"}],
+            },
+            {
+              boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "miss", "miss", "miss", "miss"],
+              computations: [{isChunk: true, index: 7, content: "wo"}],
+            },
+            {
+              boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "unve", "miss", "miss", "miss"],
+              computations: [],
+            },
+            {
+              boxStatuses: ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "veri", "veri", "miss", "miss"],
+              computations: [{isChunk: false, resultsIn: 9, left: 10, right: 11, len: 3}],
+            },
+            {
+              boxStatuses: ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "veri", "done", "miss"],
+              computations: [{isChunk: true, index: 10, content: "rl"}],
+            },
+            {
+              boxStatuses: ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done"],
+              computations: [{isChunk: true, index: 11, content: "d"}],
+            },
+          ]}
+        />
+      </Div>
 
-        <Fig
+        {/* <Fig
           n="fig_buffering_free"
           wrapperTagProps={{clazz: "wide"}}
           title="TODO"
@@ -678,7 +718,7 @@ const exp = (
               ["done", "done", "done", "done", "done", "done", "done", "done", "done"],
             ]}
           />
-        </Fig>
+        </Fig> */}
 
 
         {/* <VisualizeVerification
