@@ -501,13 +501,13 @@ export function Slides({ slides, slideshowId }: { slides: Expression[], slidesho
     const prev = <A
     clazz={`slideNavButton prev${i === 0 ? " inactive" : ""}`}
     href={i === 0 ? undefined : `#${slideshowId}_${i - 1}`}>
-      Previous
+      Previous Step
     </A>;
 
     const next = <A
     clazz={`slideNavButton next${i === (slides.length - 1) ? " inactive" : ""}`}
     href={i === (slides.length - 1) ? undefined : `#${slideshowId}_${i + 1}`}>
-      Next
+      Next Step
     </A>;
 
     renderedSlides.push(<Div clazz="slide" id={`${slideshowId}_${i}`}>
