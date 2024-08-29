@@ -662,7 +662,7 @@ const exp = (
         </P>
       </Hsection>
 
-      <Hsection n="chunk_size_concerns" title="Chunk Size">
+      <Hsection n="chunk_size_concerns" title="Parameterized Chunk Size">
         <P>
           Bab leaves the <R n="chunk_size"/> as a freely choosable parameter, because different values incur different tradeoffs. At the most basic, a larger <R n="chunk_size"/> shrinks the Merkle tree and thus reduces the metadata overhead in verified streaming, but it also increases the amount of data that needs to be read in sequence without being able to verify it immediately. The <R n="chunk_size"/> also serves as an upper bound to the size of proofs of string length in Bab. Finally, the chunk size also affects the performance of computing strings, see the discussion in <A href="https://raw.githubusercontent.com/BLAKE3-team/BLAKE3-specs/master/blake3.pdf#section.7">Section 7.1 of the Blake3 paper</A>.
         </P>
