@@ -450,7 +450,7 @@ const exp = (
               },
               {
                 boxStatuses: ["done", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-                computations: [{isChunk: false, resultsIn: 1, left: 2, right: 9, len: 11, isRoot: true}],
+                computations: [{isChunk: false, resultsIn: 1, left: 2, right: 9, len:11, isRoot: true, isRoot: true}],
               },
               {
                 boxStatuses: ["done", "veri", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
@@ -559,7 +559,7 @@ const exp = (
               },
               {
                 boxStatuses: ["done", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-                computations: [{isChunk: false, resultsIn: 1, left: 2, right: 9, len: 11, isRoot: true}],
+                computations: [{isChunk: false, resultsIn: 1, left: 2, right: 9, len:11, isRoot: true, isRoot: true}],
               },
               {
                 boxStatuses: ["done", "veri", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
@@ -746,7 +746,7 @@ const exp = (
         </P>
 
         <P>
-          Moreover, we can omit successive left labels from the <R n="baseline"/> by iterating the reconstruction of the labels. For each successively omitted left label, the corresponding right label needs to be buffered in an unverified state. <Rcb n="fig_ex_light"/> shows the stream when omitting omits all left labels except those that are labels of leaf vertices for the <Code>hello_world</Code> example (that is, omitting the labels of verticies <M>2</M> and <M post="):">3</M>
+          Moreover, we can omit successive left labels from the <R n="baseline"/> by iterating the reconstruction of the labels. For each successively omitted left label, the corresponding right label needs to be buffered in an unverified state. <Rcb n="fig_ex_light"/> shows the stream when omitting all left labels except those that are labels of leaf vertices for the <Code>hello_world</Code> example (that is, omitting the labels of vertices <M>2</M> and <M post="):">3</M>
         </P>
 
         <Fig
@@ -799,7 +799,7 @@ const exp = (
                 computations: [
                   {isChunk: false, resultsIn: 3, left: 4, right: 5, len: 4},
                   {isChunk: false, resultsIn: 2, left: 3, right: 6, len: 8},
-                  {isChunk: false, resultsIn: 1, left: 2, right: 9, len: 11},
+                  {isChunk: false, resultsIn: 1, left: 2, right: 9, len:11, isRoot: true},
                 ],
               },
               {
@@ -848,7 +848,7 @@ const exp = (
         </Div>
 
         <P>
-          This construction suggests a natural optimization over the <R n="baseline"/>: keep the labels of all leaf vertices, but omit as many left labels on the paths from the leaves to the root as can be omitted without increasing the <R n="delay"/>. If the <R n="delay"/> would be increased, instead include the label, but then resume omitting as many left labels as possible along the remaining path to the root again. This way, only one out of <M><R n="chunk_size"/> / <R n="width"/></M> left labels need to be transmitted.
+          This construction suggests a natural optimization over the <R n="baseline"/>: keep the labels of all leaf vertices, but omit as many left labels on the paths from the leaves to the root as can be omitted without increasing the <R n="delay"/>. If the <R n="delay"/> would be increased, instead include the label, but then resume omitting as many left labels as possible along the remaining path to the root again. This way, only one out of <M><R n="chunk_size"/> / <R n="width"/></M> left labels needs to be transmitted.
         </P>
 
         <PreviewScope>
@@ -858,127 +858,118 @@ const exp = (
         </PreviewScope>
 
         <P>
-          Blake3 and <R n="william3"/> have a <R n="width"/> of 32 bytes and a <R n="chunk_size"/> of 1024 bytes, putting the quotient at <M post="."><MFrac num="1024" de="32"/> = 32</M> Omitting all but one out of 32 left labels reduces total number of labels by <M post="."><MFrac num="32 + 1" de="32 + 32"/> = <MFrac num="33" de="64"/> \approx <MFrac num="1" de="2"/></M> Whereas the <R n="baseline"/> has a verification metadata overhead of roughly 3.1% for Bao and <R n="william3"/>, the <R n="light"/> reduces the overhead to roughly 1.6%.
+          Blake3 and <R n="william3"/> have a <R n="width"/> of 32 bytes and a <R n="chunk_size"/> of 1024 bytes, putting the quotient at <M post="."><MFrac num="1024" de="32"/> = 32</M> Omitting all but one out of 32 left labels reduces total number of labels by <M post="."><MFrac num="32 + 1" de="32 + 32"/> = <MFrac num="33" de="64"/> \approx <MFrac num="1" de="2"/></M> Whereas the <R n="baseline"/> has a verification metadata overhead of roughly 3.1% for Bao and <R n="william3"/>, the <R n="light"/> reduces the overhead to roughly 1.6%, without increasing the <R n="delay"/>.
         </P>
-
       </Hsection>
 
-      
+      <Hsection n="omitting_layers" title="Omitting Lower Layers">
+        <PreviewScope>
+          <P>
+            In addition to the <R n="light"/>, there is an elegant way to reduce metadata transmission in exchange for increasing the <R n="delay"/>: skipping all metadata for the lower <M><Def n="k"/></M> layers of the Merkle tree. These labels have to be reconstructed from successive <Rs n="chunk"/>; reconstructing a label of layer <M><Def n="i"/></M> requires <M>2^<Curly>{<R n="i"/>}</Curly></M> <Rs n="chunk"/>. Hence, the <R n="delay"/> increases to <M post=".">2^<Curly>{<R n="k"/>}</Curly></M>
+          </P>
 
-      
+          <P>
+            The left label of vertices on layer <R n="k"/> must be present, but the labels of the next <M>\lceil<Curly>2^<Curly><R n="chunk_size"/></Curly></Curly> / <R n="width"/>\rceil</M> are skipped. The labels of the next layer are included, then more layers can be skipped, and so on. We call this stream the <Def n="kgrouped" r="k-grouped light verifiable stream"/>. If all labels for all vertices of layer <R n="k"/> and above are included, we call the stream the <Def n="kgrouped_baseline" r="k-grouped baseline verifiable stream"/><Marginale>
+              For <M post=","><R n="k"/> = 0</M> the <R n="kgrouped"/> coincides with the <R n="light"/>, and the <R n="kgrouped_baseline"/> coincides with the <R n="baseline"/>.  
+            </Marginale>. Since the <R n="kgrouped"/> has the same <R n="delay"/> but is shorter, it should be preferred.
+          </P>
+        </PreviewScope>
 
-        {/* <Fig
-          n="fig_buffering_free"
-          wrapperTagProps={{clazz: "wide"}}
-          title="TODO"
+        <P>
+          <Rcb n="fig_ex_kgrouped"/> shows the <R n="kgrouped">1-grouped light verifiable stream</R> for our running example.
+        </P>
+
+        <Fig
+          n="fig_ex_kgrouped"
+          // wrapperTagProps={{clazz: "wide"}}
+          title="1-Grouped Verifiable Stream Example"
           caption={
             <>
               <P>
-                TODO
+                The verification data to send for <Code>hello_world</Code> with a <R n="chunk_size"/> of two in the <R n="kgrouped">1-grouped light verifiable stream</R>.
               </P>
             </>
           }
         >
-          <VisualizeVerification
-            compact
-            boxes={[
-              {isChunk: false, content: "9"},
-              {isChunk: false, content: "6"},
-              {isChunk: false, content: "4"},
-              {isChunk: false, content: "5"},
-              {isChunk: true, content: "he"},
-              {isChunk: true, content: "ll"},
-              {isChunk: false, content: "7"},
-              {isChunk: false, content: "8"},
-              {isChunk: true, content: "o_"},
-              {isChunk: true, content: "wo"},
-              {isChunk: false, content: "10"},
-              {isChunk: false, content: "11"},
-              {isChunk: true, content: "rl"},
-              {isChunk: true, content: "d"},
-            ]}
-            states={[
-              ["unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["unve", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["unve", "unve", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["veri", "veri", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["veri", "veri", "done", "veri", "done", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["veri", "veri", "done", "done", "done", "done", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["veri", "veri", "done", "done", "done", "done", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["veri", "done", "done", "done", "done", "done", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["veri", "done", "done", "done", "done", "done", "done", "unve", "done", "miss", "miss", "miss", "miss", "miss"],
-              ["veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "miss", "miss", "miss", "miss"],
-              ["veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "unve", "miss", "miss", "miss"],
-              ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "veri", "veri", "miss", "miss"],
-              ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "veri", "done", "miss"],
-              ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done"],
-            ]}
+          <P>
+            <Sidenote note="The length of the original string in bytes."><Code>11</Code></Sidenote>, <Turbo2><Application fun="lbl" args={["9"]}/></Turbo2>, <Turbo3><Application fun="lbl" args={["3"]}/></Turbo3>, <Turbo4><Application fun="lbl" args={["6"]}/></Turbo4>, <Turbo7><Code>he</Code></Turbo7>, <Turbo8><Code>ll</Code></Turbo8>, <Turbo11><Code>o_</Code></Turbo11>, <Turbo12><Code>wo</Code></Turbo12>, <Turbo15><Code>rl</Code></Turbo15>, <Turbo16><Code>d</Code></Turbo16>.
+          </P>
+          <Img
+            src={<ResolveAsset asset={["graphics", "tree_1grouped.svg"]} />}
+            alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the 1-grouped light verifiable stream."
           />
         </Fig>
 
-        <Fig
-          n="fig_buffering_group2"
-          wrapperTagProps={{clazz: "wide"}}
-          title="TODO"
-          caption={
-            <>
-              <P>
-                TODO
-              </P>
-            </>
-          }
-        >
+        <P>
+          Below, you can step through the verification process:
+        </P>
+
+        <Div clazz="wide">
           <VisualizeVerification
-            boxes={[
-              {isChunk: false, content: "9"},
-              {isChunk: false, content: "3"},
-              {isChunk: false, content: "6"},
-              {isChunk: true, content: "he"},
-              {isChunk: true, content: "ll"},
-              {isChunk: true, content: "o_"},
-              {isChunk: true, content: "wo"},
-              {isChunk: true, content: "rl"},
-              {isChunk: true, content: "d"},
-            ]}
-            states={[
-              ["unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["unve", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["veri", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["veri", "veri", "veri", "unve", "miss", "miss", "miss", "miss", "miss"],
-              ["veri", "done", "veri", "done", "done", "miss", "miss", "miss", "miss"],
-              ["veri", "done", "veri", "done", "done", "unve", "miss", "miss", "miss"],
-              ["veri", "done", "done", "done", "done", "done", "done", "miss", "miss"],
-              ["veri", "done", "done", "done", "done", "done", "done", "unve", "miss"],
-              ["done", "done", "done", "done", "done", "done", "done", "done", "done"],
+            slidesId="exKgrouped"
+            compact
+            layers={4}
+            boxes={exampleBoxes}
+            skipping={[1, 5, 6, 9, 10, 13, 14]}
+            steps={[
+              {
+                boxStatuses: ["veri", "miss", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [],
+              },
+              {
+                boxStatuses: ["veri", "miss", "unve", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [
+                  {isChunk: false, resultsIn: 2, left: 3, right: 6, len: 8},
+                  {isChunk: false, resultsIn: 1, left: 2, right: 9, len:11, isRoot: true},
+                ],
+              },
+
+              {
+                boxStatuses: ["done", "done", "veri", "veri", "veri", "miss", "miss", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "veri", "done", "done", "done", "done", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [
+                  {isChunk: true, index: 4, content: "he"},
+                  {isChunk: true, index: 5, content: "ll"},
+                  {isChunk: false, resultsIn: 3, left: 4, right: 5, len: 4},
+                ],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "veri", "done", "done", "done", "done", "miss", "miss", "unve", "miss", "miss", "miss", "miss", "miss"],
+                computations: [],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "miss", "miss", "miss", "miss"],
+                computations: [
+                  {isChunk: true, index: 7, content: "o_"},
+                  {isChunk: true, index: 8, content: "o_"},
+                  {isChunk: false, resultsIn: 6, left: 7, right: 8, len: 4},
+                ],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "miss", "miss", "unve", "miss"],
+                computations: [],
+              },
+              {
+                boxStatuses: ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done"],
+                computations: [
+                  {isChunk: true, index: 10, content: "rl"},
+                  {isChunk: true, index: 11, content: "d"},
+                  {isChunk: false, resultsIn: 9, left: 10, right: 11, len: 3},
+                ],
+              },
             ]}
           />
-        </Fig> */}
+        </Div>
+      </Hsection>
 
-
-        {/* <VisualizeVerification
-            boxes={[
-              {isChunk: false, content: "2"}, {isChunk: false, content: "9"},
-              {isChunk: false, content: "3"}, {isChunk: false, content: "6"},
-              {isChunk: false, content: "7"}, {isChunk: false, content: "8"},
-              {isChunk: true, content: "o_"},
-              {isChunk: true, content: "wo"},
-              {isChunk: false, content: "10"}, {isChunk: false, content: "11"},
-              {isChunk: true, content: "rl"},
-            ]}
-            states={[
-              ["unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["done", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["done", "veri", "done", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["done", "veri", "done", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss"],
-              ["done", "veri", "done", "done", "veri", "veri", "miss", "miss", "miss", "miss", "miss"],
-              ["done", "veri", "done", "done", "done", "veri", "done", "miss", "miss", "miss", "miss"],
-              ["done", "veri", "done", "done", "done", "done", "done", "done", "miss", "miss", "miss"],
-              ["done", "veri", "done", "done", "done", "done", "done", "done", "unve", "miss", "miss"],
-              ["done", "done", "done", "done", "done", "done", "done", "done", "veri", "done", "miss"],
-              ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done"],
-            ]}
-          /> */}
+      
     </Hsection>
 
     <Hr/>
