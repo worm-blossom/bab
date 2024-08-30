@@ -402,7 +402,11 @@ const exp = (
 
       <Hsection n="streaming_verification" title="Streaming Verification">
         <P>
-          Using the root label of a Merkle-tree as the digest opens up the option of incrementally verifying a string as it is being received as belonging to the requested hash. To do so, the transmission of each chunk is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. As an optimization, each label is transmitted at most once; it is the receiver’s responsibility to cache labels until they are not needed for verification any longer. At the very start of the transmission, the length of the string has to be sent. <Rcb n="fig_stream"/> visualizes and lists an example stream:
+          Using the root label of a Merkle-tree as the digest opens up the option of incrementally verifying a string as it is being received as belonging to the requested hash. To do so, the transmission of each chunk is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. As an optimization, each label is transmitted at most once; it is the receiver’s responsibility to cache labels until they are not needed for verification any longer. At the very start of the transmission, the length of the string has to be sent. We call this transmission the <Def n="baseline" r="baseline verifiable stream" preview={<>
+            <P>
+              The <Def fake n="baseline" r="baseline verifiable stream"/> of a string allows for streaming authentication of a get request for a digest. It starts with the length of the requested string, followed by the chunks of the string, where each chunk is preceded by some metadata: the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. Each label is transmitted at most once, duplicates are omitted.
+            </P>
+          </>}/>. <Rcb n="fig_stream"/> visualizes and lists an example:
         </P>
 
         <Fig
@@ -412,7 +416,7 @@ const exp = (
           caption={
             <>
               <P>
-                The vertices of our recurring example tree, each showing the data that they contribute to the data stream that lets a client incrementally verify the digest of the string <Code>hello_world</Code>.
+                The vertices of our recurring example tree, each showing the data that they contribute to the <R n="baseline"/> that lets a client incrementally verify the digest of the string <Code>hello_world</Code>.
               </P>
               <P>
                 Listing the vertices in the order in which they contribute their child labels or chunks is quite instructive: <M post=".">1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11</M> Can you spot the pattern?
@@ -430,7 +434,7 @@ const exp = (
         </Fig>
 
         <P>
-          The client can verify the stream by eargerly reconstructing the labels of tree nodes and asserting that the computed labels match the received data. You can go through the verification process for the example stream step by step below. Each step consists of reading either a full label or a full chunk from the stream. The graphic shows the Merkle tree and indicates for each node the knowledge that the client has about it: dim if the client has not yet received any data concerning it, shaded orange if the client has received data that it will need later but cannot verify yet, green if it could verify the data and needs to keep it for verification of subsequent data, and gray if it has verified the data and does not need it for any future computation either.
+          The client can verify the stream by eargerly reconstructing the labels of tree nodes and asserting that the computed labels match the received data. You can go through the verification process for the example stream step by step below. Each step consists of reading either a full label or a full chunk from the stream. The graphic shows the Merkle tree and indicates for each node the knowledge that the client has about it: dim if the client has not yet received any data concerning it, diagonally striped orange if the client has received data that it will need later but cannot verify yet, green if it could verify the data and needs to keep it for verification of subsequent data, and gray if it has verified the data and does not need it for any future computation either.
         </P>
 
         <Div clazz="wide">
@@ -511,7 +515,7 @@ const exp = (
 
       <Hsection n="slice_verification" title="Slice Verification">
         <P>
-          The Merkle-tree design allows not only for verifiable streaming of the full string, but also of any slice (of chunks) within. Assume a client wants to receive some number of chunks, starting at some chunk offset. The response data is defined with the same technique as for the full string: the transmission of each chunk is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. Again, each label is transmitted at most once. Since the length of the slice is known to the client, the response need not be prefixed by the length. <Rcb n="fig_stream_slice"/> shows an example of which data needs to be transmitted when the client requests three chunks, starting at offset two (zero-indexed).
+          The Merkle-tree design allows not only for verifiable streaming of the full string, but also of any slice (of chunks) within. Assume a client wants to receive some number of chunks, starting at some chunk offset. The response data is defined with the same technique as for the <R n="baseline"/>: the transmission of each chunk <Em>in the slice</Em> is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. Chunks outside the slice do not contribute any data. Again, each label is transmitted at most once. Since the length of the slice is known to the client, the response need not be prefixed by the length. <Rcb n="fig_stream_slice"/> shows an example of which data needs to be transmitted when the client requests three chunks, starting at offset two (zero-indexed).
         </P>
 
         <Fig
@@ -604,7 +608,7 @@ const exp = (
         </P>
 
         <P>
-          Blake3 does <Em>not</Em> incorporate lengths into the computation of inner vertex labels, this is the major point of divergence between Blake3 and Bab. Blake3 still supports length proofs, these consist of the length followed by the same data as a reply to a slice request for only the final chunk. Such a proof always contains at least a full chunk, plus twice the height of the tree in labels. For a moderately short string (say, 4096 bytes), the length proof via Blake3 has a size of <M>8 + 2*2*32 + 1024 = 1160</M> bytes. A William3 lenght proof, in comparison, requires <M>2 * 32 + 8 = 72</M> bytes, even for longer strings.
+          Blake3 does <Em>not</Em> incorporate lengths into the computation of inner vertex labels. Blake3 still supports length proofs, these consist of the length followed by the same data as a reply to a slice request for only the final chunk. Such a proof always contains at least a full chunk, plus twice the height of the tree in labels; its size is logarithmic in the length of the string. For a moderately short string (say, 4096 bytes), the length proof via Blake3 has a size of <M>8 + 2 \cdot 2 \cdot 32 + 1024 = 1160</M> bytes. A William3 lenght proof, in comparison, requires <M>2 \cdot 32 + 8 = 72</M> bytes, even for longer strings.
         </P>
 
         <P>
@@ -650,7 +654,7 @@ const exp = (
 
       <Hsection n="binary_tree" title="Binary Tree">
         <P>
-          Binary trees are not the only candidate digraphs as the merkelization backbone. Some other candidate constructions include ternary trees (which are more efficient than binary trees <A href="https://en.wikipedia.org/wiki/Optimal_radix_choice#Ternary_tree_efficiency">in some applications</A>) and <A href="https://aljoscha-meyer.de/reed/">efficient binary linking schemes</A>. However, for verified streaming, binary trees turn out to be more efficient.
+          Binary trees are not the only candidate digraphs as the merkelization backbone. Some other candidate constructions include ternary trees (which are more efficient than binary trees <A href="https://en.wikipedia.org/wiki/Optimal_radix_choice#Ternary_tree_efficiency">in some applications</A>), and <A href="https://aljoscha-meyer.de/reed/">efficient binary linking schemes</A>. However, for verified streaming, binary trees turn out to be more efficient.
         </P>
 
         <P>
@@ -670,6 +674,52 @@ const exp = (
     </Hsection>
 
     <Hsection n="optimizations" title="Optimized Streaming Verification">
+      <P>
+        The <R n="baseline"/> imposes a certain overhead compared to transmitting a raw string. When instantiating with a <R n="width"/> of 32 bytes and a <R n="chunk_size"/> of 1024 bytes (like Blake3 and <R n="william3"/>), roughly 3.125% of streaming data is metadata. This is already a fairly low overhead, but it turns out we can do better.
+      </P>
+
+      <P>
+        There are certain redundancies in how streaming verification works. Consider again <Rc n="fig_stream"/>, where the stream starts with (<Application fun="lbl" args={["2"]}/>, <Application fun="lbl" args={["9"]}/>, <Application fun="lbl" args={["3"]}/>, <Application fun="lbl" args={["6"]}/>, …). <Application fun="lbl" args={["2"]}/> can be computed from <Application fun="lbl" args={["3"]}/> and <Application fun="lbl" args={["6"]}/>, and both of those are transmitted. So why transmit the redundant <Application fun="lbl" args={["2"]}/>?
+      </P>
+
+      <P>
+        Technically, <Em>all</Em> label transmissions are redundant: if the server sends only the chunks (i.e., simply the string itself), the client can successfully reconstruct the digest, after all. The difference lies in the length of the longest consecutive sequence of bytes that the client receives without being able to verify. When sending only the raw string, that sequence is simply all of the string but its final byte. The <R n="baseline"/> minimizes the length of the longest unverifiable sequence. A scheme that skips <Application fun="lbl" args={["2"]}/> sits between the two <Sidenote note={<>Or at least it <Em>appears</Em> to do so at first glance.</>}>extremes</Sidenote>. We now examine in detail the notion of unverifiable subsequences in a verification data stream, and how to leverage it for efficiency gains.
+      </P>
+
+      <Hsection n="unverifiable_sequences" title="Unverifiable Sequences">
+        <PreviewScope>
+          <P>
+            When receiving a string interleaved with verification metadata, we call a transmitted label <Def n="verified"/> if it is the root <Sidenote note="We assume that the client trusts the digest it uses for a request.">label</Sidenote>, or if it and its sibling label have been fed into <R n="hash_inner"/>, yielded the label of the parent vertex, and the parent label has also been <R n="verified"/>. We call a <R n="chunk"/> <Def fake n="verified"/> if it has been fed into <R n="hash_chunk"/>, yielded the label of the vertex corresponding to the <R n="chunk"/>, and that label has also been <R n="verified"/>.
+          </P>
+        </PreviewScope>
+
+        <PreviewScope>
+          <P>
+            An <Def n="unverifiable_seq" r="unverifiable sequence" rs="unverifiable sequences"/> is a sequence of consecutive bytes in a response stream whose corresponding labels and chunks cannot yet be <R n="verified"/>. A maximal such sequence in a stream is called a <Def n="mus" r="MUS" rs="MUSs">maximal unverifiable sequence</Def> (<Def fake n="mus" r="MUS"/>). We call the length of the <R n="mus"/> of a stream its <Def n="delay" r="verification delay"/>.
+          </P>
+        </PreviewScope>
+
+        <P>
+          What are the <Rs n="unverifiable_seq"/> in a stream? Any partially transmitted label is unverifiable. Further, a label of a left child is unverifiable without the corresponding label of the right child. Since these are always transmitted in succession, the longest <Rs n="unverifiable_seq"/> contributed by labels have length <M post=".">2 \cdot <R n="width"/> - 1</M> <Rsb n="chunk"/> can only be verified when their final byte gets received, so they contribute <Rs n="unverifiable_seq"/> of length <M post="."><R n="chunk_size"/> - 1</M>
+        </P>
+
+        <P>
+          This puts the <R n="delay"/> of the <R n="baseline"/> at the maximum of <M>2 \cdot <R n="width"/> - 1</M> and <M post="."><R n="chunk_size"/> - 1</M> In most practical instantiations, the <R n="chunk_size"/> should <Sidenote note={<>
+            Blake3 and <R n="william3"/>, for example, have a <R n="width"/> of 32 bytes and a <R n="chunk_size"/> of 1024 bytes.  
+          </>}>dominate</Sidenote>. For the remainder of this document, we will assume that <M post=","><R n="chunk_size"/> \geq 2 \cdot <R n="width"/></M> yielding a <R n="delay"/> of the <R n="baseline"/> of <M post="."><R n="chunk_size"/> - 1</M>
+        </P>
+
+        <P>
+          The <R n="delay"/> gives an upper bound of how much progress is lost if a connection failure occurs in the worst possible moment. It also gives the greatest amount of untrusted data that a client has to buffer in memory <Sidenote note={<>
+            This number is one greater than the <R n="delay"/>, because the final byte also needs to be loaded into memory for verification. Verification of <Rs n="chunk"/> might not require holding the full <R n="chunk"/> in memory, but we assume that the client requested the data for a reason, and thus has to hold on to it even if not strictly necessary for verification alone.
+          </>}>simultaneously</Sidenote>. Note that this required buffer capacity is mostly independent from the memory that the client needs for buffering <R n="verified"/> labels for reuse in later assertions. Every label of a right child needs to be kept in memory after verification, in order to verify the labels of <Em>its</Em> two children. Hence, verification always requires the capacity to buffer one label per layer of the Merkle-tree (see <A href="#exVeriDefault_5">this example</A>).
+        </P>
+      </Hsection>
+
+      <Hsection n="left_label_omission" title="Omitting Left Labels">
+        
+      </Hsection>
+
       <P>
         <Alj inline>TODO</Alj>
       </P>
