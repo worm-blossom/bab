@@ -717,12 +717,59 @@ const exp = (
       </Hsection>
 
       <Hsection n="left_label_omission" title="Omitting Left Labels">
-        
+        <P>
+          When a response stream omits a left label, the client cannot verify the corresponding right label when it arrives. But it can, at a later point, reconstruct the label, and then use the reconstructed data to verify both the right label and the reconstructed one. We now describe this process more precisely, and then we investigate how to improve upon the <R n="baseline"/> with this technique.
+        </P>
+
+        <PreviewScope>
+          <P>
+            Let <DefValue n="llo_p" r="p"/> be an inner Merkle-tree vertex with left child <DefValue n="llo_l" r="l"/> and right child <DefValue n="llo_r" r="r"/>. What precisely happens when we omit <Application fun="lbl" args={[<R n="llo_l"/>]}/> from the <R n="baseline"/>? 
+          </P>
+        </PreviewScope>
+
+        <P>
+          After the omitted label, the stream continues with <Application fun="lbl" args={[<R n="llo_r"/>]}/>. Unlike in the unmodified <R n="baseline"/>, the client cannot verify <Application fun="lbl" args={[<R n="llo_l"/>]}/> immediately; the client needs to buffer it as unverified data instead. Next, the stream continues with the data corresponding to <R n="llo_l"/>. There are two cases, depending on whether <R n="llo_l"/> is a leaf vertex or an inner vertex.
+        </P>
+
+        <P>
+          If <R n="llo_l"/> is a leaf vertex, then the stream continues with a <R n="chunk"/>. This chunk can be fed into <R n="hash_chunk"/> to recover a (still unverified) candidate label of <R n="llo_l"/>. Feeding this candidate label and the (still unverified) <Application fun="lbl" args={[<R n="llo_r"/>]}/> into <R n="hash_inner"/> yields a candidate label for <R n="llo_p"/>. The client can now compare the candidate label for <R n="llo_p"/> against the actual <Application fun="lbl" args={[<R n="llo_r"/>]}/> that it received and verified earlier in the stream. If they are equal, then both the received chunk and the received <Application fun="lbl" args={[<R n="llo_r"/>]}/> are successfully <R n="verified"/>.
+        </P>
+
+        <P>
+          If <R n="llo_l"/> is an inner vertex, then the stream continues with the labels of the left and right children of <R n="llo_l"/>. These can be fed into <R n="hash_inner"/> to recover a (still unverified) candidate label of <R n="llo_l"/>. The client can then perform the same verification steps as in the first case, leading to verification of both the labels of the children of <R n="llo_l"/>, and of <Application fun="lbl" args={[<R n="llo_r"/>]}/>.
+        </P>
+
+        <P>
+          If <R n="llo_l"/> is a leaf vertex, the <R n="delay"/> <Sidenote note={<>
+            Remember our assumption that <M post="."><R n="chunk_size"/> \geq 2 \cdot <R n="width"/></M>
+          </>}>increases</Sidenote> by <R n="width"/>. But when <R n="llo_l"/> is an <Em>inner</Em> vertex, an <R n="unverifiable_seq"/> of length <M>2 \cdot <R n="width"/></M> is turned into an <R n="unverifiable_seq"/> of length <M post=".">3 \cdot <R n="width"/></M> If <M post=","><R n="chunk_size"/> \geq 3 \cdot <R n="width"/></M> then the <R n="delay"/> remains unchanged — despite omitting <R n="width"/> many bytes from the verification stream!
+        </P>
+
+        <P>
+          Moreover, we can omit successive left labels from the <R n="baseline"/> by iterating the reconstruction of the labels. For each successively omitted left label, the corresponding right label needs to be buffered in an unverified state. You can step through the verification process for the <Code>hello_world</Code> example below, for a stream that omits all left labels except those that are labels of leaf vertices:
+        </P>
+
+        <P>
+          <Alj inline>Add stepper here</Alj>
+        </P>
+
+        <P>
+          This construction suggests a natural optimization over the <R n="baseline"/>: keep the labels of all leaf vertices, but omit as many left labels on the paths from the leaves to the root as can be omitted without increasing the <R n="delay"/>. If the <R n="delay"/> would be increased, instead include the label, but then resume omitting as many left labels as possible along the remaining path to the root again. This way, only one out of <M><R n="chunk_size"/> / <R n="width"/></M> left labels need to be transmitted.
+        </P>
+
+        <PreviewScope>
+          <P>
+            More precisely: define the <Def n="layer"/> of a tree vertex as the length of the path from it to its leftmost leaf. I.e., the <R n="layer"/> of a leaf is <M post=",">0</M> the <R n="layer"/> of a vertex whose left child is a leaf is <M post=",">1</M> and so on. Assume that <M post="."><R n="chunk_size"/> \geq 2 \cdot <R n="width"/></M> Then, the <Def n="light" r="light verifiable stream"/> of a string is its <R n="baseline"/>, except omitting those labels that are contributed to the stream as left children and that are not labelling vertices whose <R n="layer"/> is divisible by <M post=".">\lceil<R n="chunk_size"/> / <R n="width"/>\rceil</M> 
+          </P>
+        </PreviewScope>
+
+        <P>
+          Blake3 and <R n="william3"/> have a <R n="width"/> of 32 bytes and a <R n="chunk_size"/> of 1024 bytes, putting the quotient at <M post="."><MFrac num="1024" de="32"/> = 32</M> Omitting all but one out of 32 left labels reduces total number of labels by <M post="."><MFrac num="32 + 1" de="32 + 32"/> = <MFrac num="33" de="64"/> \approx <MFrac num="1" de="2"/></M> Whereas the <R n="baseline"/> has a verification metadata overhead of roughly 3.135% for Bao and <R n="william3"/>, the <R n="light"/> reduces the overhead to roughly 1.611%.
+        </P>
+
       </Hsection>
 
-      <P>
-        <Alj inline>TODO</Alj>
-      </P>
+      
 
       
 
@@ -846,7 +893,7 @@ const exp = (
 
     <Hsection n="requests" title="Requests and Verifiable Responses">
         <P>
-          We now describe the various requests that a client in a Bao-based content-addressable storage system can issue and for which a server can supply verifiable responses.
+          We now describe the various requests that a client in a Bab-based content-addressable storage system can issue and for which a server can supply verifiable responses.
         </P>
 
         <Hsection n="sec_batch_get" title="Batch Get Requests">
