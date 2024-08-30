@@ -675,7 +675,7 @@ const exp = (
 
     <Hsection n="optimizations" title="Optimized Streaming Verification">
       <P>
-        The <R n="baseline"/> imposes a certain overhead compared to transmitting a raw string. When instantiating with a <R n="width"/> of 32 bytes and a <R n="chunk_size"/> of 1024 bytes (like Blake3 and <R n="william3"/>), roughly 3.125% of streaming data is metadata. This is already a fairly low overhead, but it turns out we can do better.
+        The <R n="baseline"/> imposes a certain overhead compared to transmitting a raw string. When instantiating with a <R n="width"/> of 32 bytes and a <R n="chunk_size"/> of 1024 bytes (like Blake3 and <R n="william3"/>), roughly 3.1% of streaming data is metadata. This is already a fairly low overhead, but it turns out we can do better.
       </P>
 
       <P>
@@ -746,7 +746,32 @@ const exp = (
         </P>
 
         <P>
-          Moreover, we can omit successive left labels from the <R n="baseline"/> by iterating the reconstruction of the labels. For each successively omitted left label, the corresponding right label needs to be buffered in an unverified state. You can step through the verification process for the <Code>hello_world</Code> example below, for a stream that omits all left labels except those that are labels of leaf vertices:
+          Moreover, we can omit successive left labels from the <R n="baseline"/> by iterating the reconstruction of the labels. For each successively omitted left label, the corresponding right label needs to be buffered in an unverified state. <Rcb n="fig_ex_light"/> shows the stream when omitting omits all left labels except those that are labels of leaf vertices for the <Code>hello_world</Code> example (that is, omitting the labels of verticies <M>2</M> and <M post="):">3</M>
+        </P>
+
+        <Fig
+          n="fig_ex_light"
+          // wrapperTagProps={{clazz: "wide"}}
+          title="Omitting Left Labels Example"
+          caption={
+            <>
+              <P>
+                The labels that remain in the <R n="baseline"/> when omitting left labels (except those that are labels of leaves).
+              </P>
+            </>
+          }
+        >
+          <P>
+            <Sidenote note="The length of the original string in bytes."><Code>11</Code></Sidenote>, <Turbo2><Application fun="lbl" args={["9"]}/></Turbo2>, <Turbo4><Application fun="lbl" args={["6"]}/></Turbo4>, <Turbo5><Application fun="lbl" args={["4"]}/></Turbo5>, <Turbo6><Application fun="lbl" args={["5"]}/></Turbo6>, <Turbo7><Code>he</Code></Turbo7>, <Turbo8><Code>ll</Code></Turbo8>, <Turbo9><Application fun="lbl" args={["7"]}/></Turbo9>, <Turbo10><Application fun="lbl" args={["8"]}/></Turbo10>, <Turbo11><Code>o_</Code></Turbo11>, <Turbo12><Code>wo</Code></Turbo12>, <Turbo13><Application fun="lbl" args={["10"]}/></Turbo13>, <Turbo14><Application fun="lbl" args={["11"]}/></Turbo14>, <Turbo15><Code>rl</Code></Turbo15>, <Turbo16><Code>d</Code></Turbo16>.
+          </P>
+          <Img
+            src={<ResolveAsset asset={["graphics", "tree_light.svg"]} />}
+            alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the verified data stream, but omitting the labels for vertices 2 and 3."
+          />
+        </Fig>
+
+        <P>
+          Below, you can step through the verification process. <A href="#exVeriLight_3">Step 4 will blow your mind!</A>
         </P>
 
         <Div clazz="wide">
@@ -833,7 +858,7 @@ const exp = (
         </PreviewScope>
 
         <P>
-          Blake3 and <R n="william3"/> have a <R n="width"/> of 32 bytes and a <R n="chunk_size"/> of 1024 bytes, putting the quotient at <M post="."><MFrac num="1024" de="32"/> = 32</M> Omitting all but one out of 32 left labels reduces total number of labels by <M post="."><MFrac num="32 + 1" de="32 + 32"/> = <MFrac num="33" de="64"/> \approx <MFrac num="1" de="2"/></M> Whereas the <R n="baseline"/> has a verification metadata overhead of roughly 3.135% for Bao and <R n="william3"/>, the <R n="light"/> reduces the overhead to roughly 1.611%.
+          Blake3 and <R n="william3"/> have a <R n="width"/> of 32 bytes and a <R n="chunk_size"/> of 1024 bytes, putting the quotient at <M post="."><MFrac num="1024" de="32"/> = 32</M> Omitting all but one out of 32 left labels reduces total number of labels by <M post="."><MFrac num="32 + 1" de="32 + 32"/> = <MFrac num="33" de="64"/> \approx <MFrac num="1" de="2"/></M> Whereas the <R n="baseline"/> has a verification metadata overhead of roughly 3.1% for Bao and <R n="william3"/>, the <R n="light"/> reduces the overhead to roughly 1.6%.
         </P>
 
       </Hsection>
