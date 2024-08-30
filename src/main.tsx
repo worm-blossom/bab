@@ -486,11 +486,11 @@ const exp = (
               },
               {
                 boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "done", "veri", "done", "miss", "miss", "miss", "miss", "miss"],
-                computations: [{isChunk: true, index: 6, content: "o_"}],
+                computations: [{isChunk: true, index: 7, content: "o_"}],
               },
               {
                 boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "miss", "miss", "miss", "miss"],
-                computations: [{isChunk: true, index: 7, content: "wo"}],
+                computations: [{isChunk: true, index: 8, content: "wo"}],
               },
               {
                 boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "unve", "miss", "miss", "miss"],
@@ -749,9 +749,78 @@ const exp = (
           Moreover, we can omit successive left labels from the <R n="baseline"/> by iterating the reconstruction of the labels. For each successively omitted left label, the corresponding right label needs to be buffered in an unverified state. You can step through the verification process for the <Code>hello_world</Code> example below, for a stream that omits all left labels except those that are labels of leaf vertices:
         </P>
 
-        <P>
-          <Alj inline>Add stepper here</Alj>
-        </P>
+        <Div clazz="wide">
+          <VisualizeVerification
+            slidesId="exVeriLight"
+            compact
+            layers={4}
+            boxes={exampleBoxes}
+            skipping={[1, 3]}
+            steps={[
+              {
+                boxStatuses: ["veri", "miss", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [],
+              },
+              {
+                boxStatuses: ["veri", "miss", "unve", "miss", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [],
+              },
+              {
+                boxStatuses: ["veri", "miss", "unve", "miss", "unve", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "veri", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [
+                  {isChunk: false, resultsIn: 3, left: 4, right: 5, len: 4},
+                  {isChunk: false, resultsIn: 2, left: 3, right: 6, len: 8},
+                  {isChunk: false, resultsIn: 1, left: 2, right: 9, len: 11},
+                ],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "veri", "done", "veri", "done", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: true, index: 4, content: "he"}],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "veri", "done", "done", "done", "done", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: true, index: 5, content: "ll"}],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "veri", "done", "done", "done", "done", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: false, resultsIn: 6, left: 7, right: 8, len: 4}],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "done", "veri", "done", "miss", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: true, index: 7, content: "o_"}],
+              },
+              {
+                boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "miss", "miss", "miss", "miss"],
+                computations: [{isChunk: true, index: 8, content: "o_"}],
+              },
+
+              {
+                boxStatuses: ["done", "done", "veri", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "unve", "miss", "miss", "miss"],
+                computations: [],
+              },
+              {
+                boxStatuses: ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "veri", "veri", "miss", "miss"],
+                computations: [{isChunk: false, resultsIn: 9, left: 10, right: 11, len: 3}],
+              },
+              {
+                boxStatuses: ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "veri", "done", "miss"],
+                computations: [{isChunk: true, index: 10, content: "rl"}],
+              },
+              {
+                boxStatuses: ["done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done", "done"],
+                computations: [{isChunk: true, index: 11, content: "d"}],
+              },
+            ]}
+          />
+        </Div>
 
         <P>
           This construction suggests a natural optimization over the <R n="baseline"/>: keep the labels of all leaf vertices, but omit as many left labels on the paths from the leaves to the root as can be omitted without increasing the <R n="delay"/>. If the <R n="delay"/> would be increased, instead include the label, but then resume omitting as many left labels as possible along the remaining path to the root again. This way, only one out of <M><R n="chunk_size"/> / <R n="width"/></M> left labels need to be transmitted.
