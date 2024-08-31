@@ -179,14 +179,14 @@ const exp = (
     abstract={
       <>
         <P>
-          Bab is a <A href="https://en.wikipedia.org/wiki/Cryptographic_hash_function">secure hash function</A> heavily inspired by Blake3, designed for use in peer-to-peer content-addressed storage systems. Like Blake3, it supports streaming verification, unlike Blake3, it allows for constant-size size proofs.
+          Bab is a construction for building <A href="https://en.wikipedia.org/wiki/Cryptographic_hash_function">secure hash functions</A>, heavily inspired by Blake3. Bab hashes allow for streaming verification of a string, similar to the Blake3-based Bao algorithm. We discuss several optimization techniques that go beyond the Bao specification. Further, unlike Blake3 and Bao, Bab digests allow for constant-sized length proofs of their strings.
         </P>
       </>
     }
     authors={[
       {
         name: <A href="https://aljoscha-meyer.de/">Aljoscha Meyer</A>,
-        email: <A href="mailto:research@aljoscha-meyer.de">research@aljoscha-meyer.de</A>,
+        email: <A href="https://github.com/AljoschaMeyer/bab">https://github.com/AljoschaMeyer/bab</A>,
       },
     ]}
   >
