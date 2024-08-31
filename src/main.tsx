@@ -179,7 +179,7 @@ const exp = (
     abstract={
       <>
         <P>
-          Bab is a <A href="https://en.wikipedia.org/wiki/Cryptographic_hash_function">secure hash function</A> heavily inspired by Blake3, designed for use in peer-to-peer content-addressed storage systems.
+          Bab is a <A href="https://en.wikipedia.org/wiki/Cryptographic_hash_function">secure hash function</A> heavily inspired by Blake3, designed for use in peer-to-peer content-addressed storage systems. Like Blake3, it supports streaming verification, unlike Blake3, it allows for constant-size size proofs.
         </P>
       </>
     }
@@ -450,7 +450,7 @@ const exp = (
               },
               {
                 boxStatuses: ["done", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-                computations: [{isChunk: false, resultsIn: 1, left: 2, right: 9, len:11, isRoot: true, isRoot: true}],
+                computations: [{isChunk: false, resultsIn: 1, left: 2, right: 9, len:11, isRoot: true}],
               },
               {
                 boxStatuses: ["done", "veri", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
@@ -514,9 +514,11 @@ const exp = (
       </Hsection>
 
       <Hsection n="slice_verification" title="Slice Verification">
-        <P>
-          The Merkle-tree design allows not only for verifiable streaming of the full string, but also of any slice (of chunks) within. Assume a client wants to receive some number of chunks, starting at some chunk offset. The response data is defined with the same technique as for the <R n="baseline"/>: the transmission of each chunk <Em>in the slice</Em> is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. Chunks outside the slice do not contribute any data. Again, each label is transmitted at most once. Since the length of the slice is known to the client, the response need not be prefixed by the length. <Rcb n="fig_stream_slice"/> shows an example of which data needs to be transmitted when the client requests three chunks, starting at offset two (zero-indexed).
-        </P>
+        <PreviewScope>
+          <P>
+            The Merkle-tree design allows not only for verifiable streaming of the full string, but also of any slice (of chunks) within. Assume a client wants to receive some number of chunks, starting at some chunk offset. The response data is defined with the same technique as for the <R n="baseline"/>: the transmission of each chunk <Em>in the slice</Em> is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. Chunks outside the slice do not contribute any data. Again, each label is transmitted at most once. Since the length of the slice is known to the client, the response need not be prefixed by the length. We call this transmission the <Def n="baseline_chunk" r="baseline verifiable chunk stream"/>. <Rcb n="fig_stream_slice"/> shows an example of which data needs to be transmitted when the client requests three chunks, starting at offset two (zero-indexed).
+          </P>
+        </PreviewScope>
 
         <Fig
           n="fig_stream_slice"
@@ -538,7 +540,7 @@ const exp = (
           </P>
           <Img
             src={<ResolveAsset asset={["graphics", "example_slice_stream.svg"]} />}
-            alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the verified data stream."
+            alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the verified data stream for the subslice *o_worl*."
           />
         </Fig>
 
@@ -559,7 +561,7 @@ const exp = (
               },
               {
                 boxStatuses: ["done", "veri", "veri", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
-                computations: [{isChunk: false, resultsIn: 1, left: 2, right: 9, len:11, isRoot: true, isRoot: true}],
+                computations: [{isChunk: false, resultsIn: 1, left: 2, right: 9, len:11, isRoot: true}],
               },
               {
                 boxStatuses: ["done", "veri", "veri", "unve", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss", "miss"],
@@ -652,7 +654,7 @@ const exp = (
         </P>
       </Hsection>
 
-      <Hsection n="binary_tree" title="Binary Tree">
+      <Hsection n="binary_tree" title="The Binary Tree">
         <P>
           Binary trees are not the only candidate digraphs as the merkelization backbone. Some other candidate constructions include ternary trees (which are more efficient than binary trees <A href="https://en.wikipedia.org/wiki/Optimal_radix_choice#Ternary_tree_efficiency">in some applications</A>), and <A href="https://aljoscha-meyer.de/reed/">efficient binary linking schemes</A>. However, for verified streaming, binary trees turn out to be more efficient.
         </P>
@@ -969,10 +971,99 @@ const exp = (
         </Div>
       </Hsection>
 
+    <Hsection n="slice_streaming" title="Slice Streaming">
+      <P>
+        All optimized verifiable streams can also be used for verifiable streaming of slices by incorporating some changes.
+        A label or chunk that would not be transmitted as part of the <R n="baseline_chunk"/> is also not part of the optimized chunk <Sidenote note="This simply filters down the stream from a full-string stream to a slice stream.">stream</Sidenote>.
+        The labels of vertices which do not lie on a path from a chunk of the slice to the root but which would be included in the <R n="baseline_chunk"/> are never <Sidenote note={<>
+          If such a label was omitted, the label of the corresponding parent vertex would be impossible to reconstruct.
+        </>}>omitted</Sidenote>.
+      </P>
+
+      <P>
+        <Rcb n="fig_slice_light"/> and <Rc n="fig_slice_grouped"/> give examples of a left and right label respectively being included in an optimized slice stream despite being omitted when requesting the full string with the same optimizations.
+      </P>
+
+      <Fig
+        n="fig_slice_light"
+        // wrapperTagProps={{clazz: "wide"}}
+        title="Light Verifiable Slice Stream Example"
+        caption={
+          <>
+            <P>
+              The verification data to send for <Code>hello_world</Code> with a <R n="chunk_size"/> of two with the <R n="light"/> format when requesting the slice <Code>o_worl</Code>. The label of vertex <M>3</M> is not omitted, despite being omitted in non-slice requests with the <R n="light"/> (compare <Rc n="fig_ex_light"/>).
+            </P>
+          </>
+        }
+      >
+        <P>
+          <Turbo2><Application fun="lbl" args={["9"]}/></Turbo2>, <Turbo3><Application fun="lbl" args={["3"]}/></Turbo3>, <Turbo4><Application fun="lbl" args={["6"]}/></Turbo4>, <Turbo9><Application fun="lbl" args={["7"]}/></Turbo9>, <Turbo10><Application fun="lbl" args={["8"]}/></Turbo10>, <Turbo11><Code>o_</Code></Turbo11>, <Turbo12><Code>wo</Code></Turbo12>, <Turbo13><Application fun="lbl" args={["10"]}/></Turbo13>, <Turbo14><Application fun="lbl" args={["11"]}/></Turbo14>, <Turbo15><Code>rl</Code></Turbo15>.
+        </P>
+        <Img
+          src={<ResolveAsset asset={["graphics", "slice_light.svg"]} />}
+          alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the verified data stream for the subslice *o_worl* to the light encoding."
+        />
+      </Fig>
+
+      <Fig
+        n="fig_slice_grouped"
+        // wrapperTagProps={{clazz: "wide"}}
+        title="1-Grouped Light Verifiable Slice Stream Example"
+        caption={
+          <>
+            <P>
+              The verification data to send for <Code>hello_world</Code> with a <R n="chunk_size"/> of two with the <R n="kgrouped">1-grouped light verifiable stream</R> format when requesting the slice <Code>o_worl</Code>. The label of vertex <M>11</M> is not omitted, despite being omitted in non-slice requests with the <R n="kgrouped">1-grouped light verifiable stream</R> (compare <Rc n="fig_ex_kgrouped"/>).
+            </P>
+          </>
+        }
+      >
+        <P>
+          <Turbo2><Application fun="lbl" args={["9"]}/></Turbo2>, <Turbo3><Application fun="lbl" args={["3"]}/></Turbo3>, <Turbo4><Application fun="lbl" args={["6"]}/></Turbo4>, <Turbo11><Code>o_</Code></Turbo11>, <Turbo12><Code>wo</Code></Turbo12>, <Turbo14><Application fun="lbl" args={["11"]}/></Turbo14>, <Turbo15><Code>rl</Code></Turbo15>.
+        </P>
+        <Img
+          src={<ResolveAsset asset={["graphics", "slice_1grouped_light.svg"]} />}
+          alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the verified data stream for the subslice *o_worl* to the 1-grouped light encoding."
+        />
+      </Fig>
+
+      <P>
+        In a system where clients can request slices, it stands to reason they might request several (non-overlapping) slices of the same string. Such non-overlapping slices have an overlap in their verification metadata: the streams include the labels of vertices that lie on a path from included chunks to the root, and these paths overlap towards the root. The closer two slices are, the higher is their overlap. In particular, let <M>a</M>, <M>b</M>, and <M>c</M> be slices such that <M>a</M> ends before <M>b</M> starts, and <M>b</M> ends before <M>c</M> starts.
+        Then the overlap between any path from the root to a leaf in the slice <M>c</M> and any path from the root to a leaf in <M>a</M> or <M>b</M> is included in the overlap beween the path from the root to the first chunk of <M>c</M> and the path from the root to the final chunk of <M>b</M>.
+        Likewise, the overlap between any path from the root to a leaf in the slice <M>a</M> and any path from the root to a leaf in <M>b</M> or <M>c</M> is included in the overlap beween the path from the root to the final chunk of <M>a</M> and the path from the root to the first chunk of <M>b</M>.
+      </P>
+
+      <PreviewScope>
+        <P>
+          For the client to tell the server which parts of the verification metadata need not be included in a slice stream because the client already has that data, it hence suffices for the client to supply two integers between <M>0</M> and <M post=":">64</M> the <DefValue n="left_skip"/> indicates to omit from the stream the labels of the children of the first <R n="left_skip"/> vertices on the path from the root to the first chunk of the slice, and the <DefValue n="right_skip"/> indicates to omit from the stream the labels of the children of the first <R n="right_skip"/> vertices on the path from the root to the final chunk of the slice.
+          <Rcb n="fig_stream_slice_skip"/> gives an example.
+        </P>
+      </PreviewScope>
+
+      <Fig
+        n="fig_stream_slice_skip"
+        // wrapperTagProps={{clazz: "wide"}}
+        title="Slice Skipping Example"
+        caption={
+          <>
+            <P>
+              Slice streaming with the <R n="baseline"/> format, a <R n="left_skip"/> of <M post=",">2</M> and a <R n="right_skip"/> of <M post=".">2</M>
+            </P>
+          </>
+        }
+      >
+        <P>
+          <Turbo9><Application fun="lbl" args={["7"]}/></Turbo9>, <Turbo10><Application fun="lbl" args={["8"]}/></Turbo10>, <Turbo11><Code>o_</Code></Turbo11>, <Turbo12><Code>wo</Code></Turbo12>, <Turbo15><Code>rl</Code></Turbo15>.
+        </P>
+        <Img
+          src={<ResolveAsset asset={["graphics", "slice_skip.svg"]} />}
+          alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the verified data stream for the subslice *o_worl* when left_skip and right_skip are set to two."
+        />
+      </Fig>
+    </Hsection>
       
     </Hsection>
 
-    <Hr/>
+    {/* <Hr/>
     <Alj inline>older draft text below.</Alj>
 
 
@@ -1255,7 +1346,7 @@ const exp = (
             <Alj inline>TODO: write this</Alj>
           </P>
         </Hsection>
-    </Hsection>
+    </Hsection> */}
 
     <Hsection title="References" n="bibliography" noNumbering>
       <Bibliography />
