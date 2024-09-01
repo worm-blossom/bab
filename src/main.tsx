@@ -229,7 +229,7 @@ const exp = (
 
     <Hsection n="the_function" title="The Bab Hash Function">
       <P>
-        Like BLAKE3, Bab hashes an input string by splitting it into chunks, and arranging the chunks as the roots of a <A href="https://en.wikipedia.org/wiki/Binary_tree">binary</A>, <A href="https://en.wikipedia.org/wiki/Binary_tree#complete">left-full</A> <A href="https://en.wikipedia.org/wiki/Merkle_tree">Merkle-tree</A>; the label of the root becomes the digest of the input.
+        Like BLAKE3, Bab hashes an input string by splitting it into chunks, and arranging the chunks as the roots of a deterministically constructed, <A href="https://en.wikipedia.org/wiki/Binary_tree">binary</A>, <A href="https://en.wikipedia.org/wiki/Merkle_tree">Merkle-tree</A>; the label of the root becomes the digest of the input.
       </P>
 
       <Hsection n="parameters" title="Parameters">
@@ -270,7 +270,9 @@ const exp = (
 
       <Hsection n="tree" title="The Merkle Tree">
         <P>
-          To hash a bytestring <R n="in"/> that was split into a <R n="chunk"/> sequence <R n="chunks"/>, Bab constructs a <A href="https://en.wikipedia.org/wiki/Binary_tree#complete">left-full</A> <A href="https://en.wikipedia.org/wiki/Binary_tree">binary</A> tree with one leaf per <R n="chunk"/>; we number the vertices in <A href="https://en.wikipedia.org/wiki/Tree_traversal#Breadth-first_search">depth-first</A> order, prioritizing left children over right children, starting at <M>1</M> in the root. <Rc n="fig_tree_unlabeled"/> shows an example.
+          To hash a bytestring <R n="in"/> that was split into a <R n="chunk"/> sequence <R n="chunks"/>, Bab constructs the unique binary tree with one leaf per <R n="chunk"/> such that all left subtrees are complete trees, and the size of the left subtrees is strictly decreasing from left to <Sidenote note={<>
+            This characerization is taken from the <Bib item="blake3">BLAKE3 paper</Bib>. The construction is identical to that of the certificate transparency logs of <Bib item="laurie2021certificate">RFC 9162</Bib>.
+          </>}>right</Sidenote>. we number the vertices in <A href="https://en.wikipedia.org/wiki/Tree_traversal#Breadth-first_search">depth-first</A> order, prioritizing left children over right children, starting at <M>1</M> in the root. <Rc n="fig_tree_unlabeled"/> shows an example.
         </P>
 
         <Fig
@@ -287,7 +289,7 @@ const exp = (
         >
           <Img
             src={<ResolveAsset asset={["graphics", "tree_unlabeled.svg"]} />}
-            alt="A left-full binary tree, the result of giving the input string *hello_world*."
+            alt="The Merkle-tree for the input string *hello_world* at a chunk size of two bytes."
           />
         </Fig>
 
@@ -324,7 +326,7 @@ const exp = (
         >
           <Img
             src={<ResolveAsset asset={["graphics", "tree_labeled.svg"]} />}
-            alt="A left-full binary tree, where each vertex shows how to compute its label."
+            alt="The Merkle-tree for the input string *hello_world* at a chunk size of two bytes, where each vertex shows how to compute its label."
           />
         </Fig>
         
@@ -614,7 +616,7 @@ const exp = (
         </P>
 
         <P>
-          BLAKE3 does <Em>not</Em> incorporate lengths into the computation of inner vertex labels. BLAKE3 still supports length proofs, these consist of the length followed by the same data as a reply to a slice request for only the final chunk. Such a proof always contains at least a full chunk, plus twice the height of the tree in labels; its size is logarithmic in the length of the string. For a moderately short string (say, 4096 bytes), the length proof via BLAKE3 has a size of <M>8 + 2 \cdot 2 \cdot 32 + 1024 = 1160</M> bytes. The corresponding WILLIAM3 lenght proof, in comparison, requires <M>2 \cdot 32 + 8 = 72</M> bytes.
+          BLAKE3 does <Em>not</Em> incorporate lengths into the computation of inner vertex labels. BLAKE3 still supports length proofs, these consist of the length followed by the same data as a reply to a slice request for only the final chunk. Such a proof always contains at least a full chunk, plus twice the height of the tree in labels; its size is logarithmic in the length of the string. For a moderately short string (say, 4096 bytes), the length proof via BLAKE3 has a size of <M>8 + 2 \cdot 2 \cdot 32 + 1024 = 1160</M> bytes. The corresponding <R n="william3"/> lenght proof, in comparison, requires <M>2 \cdot 32 + 8 = 72</M> bytes.
         </P>
 
         <P>
@@ -622,7 +624,7 @@ const exp = (
         </P>
 
         <P>
-          For secure, constant-size length proofs, it would suffice to factor the length only into the computation of the root label, but ignore it in the computation of non-root inner labels. Bab <Em>can</Em> be instantiated to this effect: since <R n="hash_inner"/> takes an <Code>is_root</Code> flag as an argument, an instantiation can choose to only factor the length into the label computation if <Code>is_root</Code> is <Code>true</Code>. WILLIAM3 incorporates the length into all node primarily for <Sidenote note={<>
+          For secure, constant-size length proofs, it would suffice to factor the length only into the computation of the root label, but ignore it in the computation of non-root inner labels. Bab <Em>can</Em> be instantiated to this effect: since <R n="hash_inner"/> takes an <Code>is_root</Code> flag as an argument, an instantiation can choose to only factor the length into the label computation if <Code>is_root</Code> is <Code>true</Code>. <R n="william3"/> incorporates the length into all node primarily for <Sidenote note={<>
             Although it would be possible to implement root-only length-incorporation in a branchless manner: treat <Code>is_root</Code> as a number (either zero or one), and multiply the length with that number before incorporating it. 
           </>}>simplicity</Sidenote>.
         </P>

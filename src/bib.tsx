@@ -100,4 +100,28 @@ export const bib: BibItemDeclaration[] = [
       </>
     ),
   },
+  {
+    item: `@article{laurie2021certificate,
+  title={Certificate transparency version 2.0},
+  author={Laurie, Ben and Langley, Adam and Kasper, Emilia and Messeri, Eran and Stradling, Rob},
+  journal={Internet Requests for Comments, RFC Editor, RFC},
+  volume={9162},
+  year={2021}
+}
+`,
+    href: "https://datatracker.ietf.org/doc/html/rfc9162",
+    blurb: (
+      <>
+        <P>
+          This document describes version 2.0 of the Certificate Transparency (CT) protocol for publicly logging the existence of Transport Layer Security (TLS) server certificates as they are issued or observed, in a manner that allows anyone to audit certification authority (CA) activity and notice the issuance of suspect certificates as well as to audit the certificate logs themselves. The intent is that eventually clients would refuse to honor certificates that do not appear in a log, effectively forcing CAs to add all issued certificates to the logs.
+        </P>
+        <P>
+          This document obsoletes RFC 6962. It also specifies a new TLS extension that is used to send various CT log artifacts.
+        </P>
+        <P>
+          Logs are network services that implement the protocol operations for submissions and queries that are defined in this document.
+        </P>
+      </>
+    ),
+  },
 ];
