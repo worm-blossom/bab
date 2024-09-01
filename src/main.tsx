@@ -697,7 +697,7 @@ const exp = (
 
         <PreviewScope>
           <P>
-            An <Def n="unverifiable_seq" r="unverifiable sequence" rs="unverifiable sequences"/> is a sequence of consecutive bytes in a response stream whose corresponding labels and chunks cannot yet be <R n="verified"/>. A maximal such sequence in a stream is called a <Def n="mus" r="MUS" rs="MUSs">maximal unverifiable sequence</Def> (<Def fake n="mus" r="MUS"/>). We call the length of the <R n="mus"/> of a stream its <Def n="delay" r="verification delay"/>.
+            An <Def n="unverifiable_seq" r="unverifiable sequence" rs="unverifiable sequences"/> is a sequence of consecutive bytes in a response stream whose corresponding labels and chunks cannot yet be <R n="verified"/>. A maximal such sequence in a stream is called a <Def n="mus" r="MUS" rs="MUSs">maximal unverifiable sequence</Def> (<Def fake n="mus" r="MUS"/>). We call the length of the <R n="mus"/> of a stream its <Def n="delay" r="verification delay" rs="verification delays"/>.
           </P>
         </PreviewScope>
 
@@ -971,382 +971,257 @@ const exp = (
         </Div>
       </Hsection>
 
-    <Hsection n="slice_streaming" title="Slice Streaming">
-      <P>
-        All optimized verifiable streams can also be used for verifiable streaming of slices by incorporating some changes.
-        A label or chunk that would not be transmitted as part of the <R n="baseline_chunk"/> is also not part of the optimized chunk <Sidenote note="This simply filters down the stream from a full-string stream to a slice stream.">stream</Sidenote>.
-        The labels of vertices which do not lie on a path from a chunk of the slice to the root but which would be included in the <R n="baseline_chunk"/> are never <Sidenote note={<>
-          If such a label was omitted, the label of the corresponding parent vertex would be impossible to reconstruct.
-        </>}>omitted</Sidenote>.
-      </P>
-
-      <P>
-        <Rcb n="fig_slice_light"/> and <Rc n="fig_slice_grouped"/> give examples of a left and right label respectively being included in an optimized slice stream despite being omitted when requesting the full string with the same optimizations.
-      </P>
-
-      <Fig
-        n="fig_slice_light"
-        // wrapperTagProps={{clazz: "wide"}}
-        title="Light Verifiable Slice Stream Example"
-        caption={
-          <>
-            <P>
-              The verification data to send for <Code>hello_world</Code> with a <R n="chunk_size"/> of two with the <R n="light"/> format when requesting the slice <Code>o_worl</Code>. The label of vertex <M>3</M> is not omitted, despite being omitted in non-slice requests with the <R n="light"/> (compare <Rc n="fig_ex_light"/>).
-            </P>
-          </>
-        }
-      >
+      <Hsection n="perfect_streaming" title="Perfect Metadata Omission">
         <P>
-          <Turbo2><Application fun="lbl" args={["9"]}/></Turbo2>, <Turbo3><Application fun="lbl" args={["3"]}/></Turbo3>, <Turbo4><Application fun="lbl" args={["6"]}/></Turbo4>, <Turbo9><Application fun="lbl" args={["7"]}/></Turbo9>, <Turbo10><Application fun="lbl" args={["8"]}/></Turbo10>, <Turbo11><Code>o_</Code></Turbo11>, <Turbo12><Code>wo</Code></Turbo12>, <Turbo13><Application fun="lbl" args={["10"]}/></Turbo13>, <Turbo14><Application fun="lbl" args={["11"]}/></Turbo14>, <Turbo15><Code>rl</Code></Turbo15>.
+          <Alj inline>This section is <Em>incorrect</Em>, the greedy algorithm deos <Em>not</Em> produce optimal results.</Alj>
         </P>
-        <Img
-          src={<ResolveAsset asset={["graphics", "slice_light.svg"]} />}
-          alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the verified data stream for the subslice *o_worl* to the light encoding."
-        />
-      </Fig>
+        <PreviewScope>
+          <P>
+            The <R n="light"/> and <R n="kgrouped"/> are elegant optimization techniques, but they are ad-hoc constructions. We now discuss an algorithm that omits the greatest possible amount of verification metadata for every combination of <R n="chunk_size"/>, <R n="width"/>, and desired <R n="delay"/>. The <R n="include_labels"/> <Sidenote note={<>
+              We give the procedure as a convenient means of definition, not as a suggested implementation technique. A real implementation should do arithmetics instead of traversing an in-memory tree structure.
+            </>}>procedure</Sidenote> defined below assigns to each vertex of a Merkle-tree whether its label should be included in what we call the <Def n="perfect" r="perfect verifiable stream"/> or not.
+          </P>
+        </PreviewScope>
 
-      <Fig
-        n="fig_slice_grouped"
-        // wrapperTagProps={{clazz: "wide"}}
-        title="1-Grouped Light Verifiable Slice Stream Example"
-        caption={
-          <>
-            <P>
-              The verification data to send for <Code>hello_world</Code> with a <R n="chunk_size"/> of two with the <R n="kgrouped">1-grouped light verifiable stream</R> format when requesting the slice <Code>o_worl</Code>. The label of vertex <M>11</M> is not omitted, despite being omitted in non-slice requests with the <R n="kgrouped">1-grouped light verifiable stream</R> (compare <Rc n="fig_ex_kgrouped"/>).
-            </P>
-          </>
-        }
-      >
         <P>
-          <Turbo2><Application fun="lbl" args={["9"]}/></Turbo2>, <Turbo3><Application fun="lbl" args={["3"]}/></Turbo3>, <Turbo4><Application fun="lbl" args={["6"]}/></Turbo4>, <Turbo11><Code>o_</Code></Turbo11>, <Turbo12><Code>wo</Code></Turbo12>, <Turbo14><Application fun="lbl" args={["11"]}/></Turbo14>, <Turbo15><Code>rl</Code></Turbo15>.
-        </P>
-        <Img
-          src={<ResolveAsset asset={["graphics", "slice_1grouped_light.svg"]} />}
-          alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the verified data stream for the subslice *o_worl* to the 1-grouped light encoding."
-        />
-      </Fig>
-
-      <P>
-        In a system where clients can request slices, it stands to reason they might request several (non-overlapping) slices of the same string. Such non-overlapping slices have an overlap in their verification metadata: the streams include the labels of vertices that lie on a path from included chunks to the root, and these paths overlap towards the root. The closer two slices are, the higher is their overlap. In particular, let <M>a</M>, <M>b</M>, and <M>c</M> be slices such that <M>a</M> ends before <M>b</M> starts, and <M>b</M> ends before <M>c</M> starts.
-        Then the overlap between any path from the root to a leaf in the slice <M>c</M> and any path from the root to a leaf in <M>a</M> or <M>b</M> is included in the overlap beween the path from the root to the first chunk of <M>c</M> and the path from the root to the final chunk of <M>b</M>.
-        Likewise, the overlap between any path from the root to a leaf in the slice <M>a</M> and any path from the root to a leaf in <M>b</M> or <M>c</M> is included in the overlap beween the path from the root to the final chunk of <M>a</M> and the path from the root to the first chunk of <M>b</M>.
-      </P>
-
-      <PreviewScope>
-        <P>
-          For the client to tell the server which parts of the verification metadata need not be included in a slice stream because the client already has that data, it hence suffices for the client to supply two integers between <M>0</M> and <M post=":">64</M> the <DefValue n="left_skip"/> indicates to omit from the stream the labels of the children of the first <R n="left_skip"/> vertices on the path from the root to the first chunk of the slice, and the <DefValue n="right_skip"/> indicates to omit from the stream the labels of the children of the first <R n="right_skip"/> vertices on the path from the root to the final chunk of the slice.
-          <Rcb n="fig_stream_slice_skip"/> gives an example.
-        </P>
-      </PreviewScope>
-
-      <Fig
-        n="fig_stream_slice_skip"
-        // wrapperTagProps={{clazz: "wide"}}
-        title="Slice Skipping Example"
-        caption={
-          <>
-            <P>
-              Slice streaming with the <R n="baseline"/> format, a <R n="left_skip"/> of <M post=",">2</M> and a <R n="right_skip"/> of <M post=".">2</M>
-            </P>
-          </>
-        }
-      >
-        <P>
-          <Turbo9><Application fun="lbl" args={["7"]}/></Turbo9>, <Turbo10><Application fun="lbl" args={["8"]}/></Turbo10>, <Turbo11><Code>o_</Code></Turbo11>, <Turbo12><Code>wo</Code></Turbo12>, <Turbo15><Code>rl</Code></Turbo15>.
-        </P>
-        <Img
-          src={<ResolveAsset asset={["graphics", "slice_skip.svg"]} />}
-          alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the verified data stream for the subslice *o_worl* when left_skip and right_skip are set to two."
-        />
-      </Fig>
-    </Hsection>
-      
-    </Hsection>
-
-    {/* <Hr/>
-    <Alj inline>older draft text below.</Alj>
-
-
-    <Hsection n="requests" title="Requests and Verifiable Responses">
-        <P>
-          We now describe the various requests that a client in a Bab-based content-addressable storage system can issue and for which a server can supply verifiable responses.
+          The algorithm is a <A href="https://en.wikipedia.org/wiki/Greedy_algorithm">greedy algorithm</A> that recursively processes all vertices, starting from the root. The processing of each vertex gets as input a budget of bytes that can be transmitted in an unverifiable manner without increasing the target <R n="delay"/>. If the budget allows, the algorithm greedily skips labels that would normally be part of the stream, and then recursively proceeds with a reduced budget. If the budget does not allow for skipping a label, the label is not marked for omission, and the next recursive step proceeds with a replenished budget.
         </P>
 
-        <Hsection n="sec_batch_get" title="Batch Get Requests">
-          <PreviewScope>
-            <P>
-              A <DefType n="batch_get" r="BatchGet"/> request consists of a single Bab digest, and asks for a string that hashes to that digest. The server can issue two valid responses: either a reply to indicate that the server does not have a corresponding string, or the full string. The client can verify a succesful response by hashing the received string and asserting that it hashes to the original digest.
-            </P>
-          </PreviewScope>
+        <P>
+          <Alj>This argumentation is incorrect, because skipping both the left and right label of a vertex is more efficient than skipping only the left label. For a <R n="width"/> of 1, a <R n="chunk_size"/> of 2, and a target <R n="delay"/> of 4, this algorithm produces a <Em>worse</Em> encoding than the 1-grouped light encoding.</Alj>
+          As a rought proof sketch for the optimality of the greedy algorithm, consider that the budget gets fully reset by including the label of a single child of a vertex. Suppose toward a contradiction there is a better, non-greedy algorithm. As it is non-greedy, it must at some point elect to not omit some labels, despite having the necessary budget. The only possibility for this to be more efficient than the greedy choice would be a later point in the algorithm where the <Quotes>saved</Quotes> budget allows for omission of more labels. The greedy algorithm, upon reaching that point and having insufficient budget, simply resets its budget however by including the label of some right child vertex. This leaves it at full budget to perform any optimizations that the hypothetical better algorithm could. The cost — inclusion of a single label — cannot be greater than that payed by the hypothetical algorithm when it saved up budget by not omitting one or more labels. Hence, the greedy algorithm omits at least as many labels as the supposed better algorithm — a contradiction.
+        </P>
 
-          <P>
-            <Rb n="batch_get"/> requests are not specific to Bab, they work with arbitrary secure hash functions. The problem is that any partial response is worthless, since the client cannot verify any data. <Rb n="batch_get"/> requests are notable for their efficiency, however: the response includes no verification metadata. We will later develop a <R n="sec_dynamic_streaming">request type</R> that lets clients specify how much untrusted data they are willing to buffer; for sufficiently large buffer capacity, such requests become equivalent to <R n="batch_get"/> requests.
-          </P>
-        </Hsection>
-
-        <Hsection n="sec_length" title="Length Requests">
-          <PreviewScope>
-            <P>
-              A <DefType n="length" r="Length"/> request consists of a single Bab digest, and asks for the length of a string that hashes to that digest.<Marginale>Bao, unlike Bab, can certify a length only by transmitting the full string.</Marginale> The server can issue two valid responses: either a reply to indicate that the server does not know of a corresponding string, or the length of the string, followed by a length proof. If the length is less than or equal to <R n="chunk_size"/>, the length proof is simply the string itself, verifiable by the client by hashing the string and asserting that it hashes to the original digest. If the length is greater than <R n="chunk_size"/>, then the corresponding Merkle tree has an inner vertex as a root. The length proof then consists of the labels of the left and the right child of the root vertex. The client verifies this proof by asserting that <Application fun="hash_inner" args={[
-                <DefValue n="length_left" r="left"/>,
-                <DefValue n="length_right" r="right"/>,
-                <DefValue n="length_len" r="len"/>,
-                "true",
-              ]}/> is equal to the original digest.
-            </P>
-          </PreviewScope>
-        </Hsection>
-
-        <Hsection n="sec_simple_streaming" title="Simple Get Requests">
-          <PreviewScope>
-            <P>
-              A <DefType n="simple_streaming_get" r="SimpleStreamingGet"/> request consists of a single Bab digest, and asks for a string that hashes to that digest, as well as interleaved verification metadata that allows verifying that the stream of incoming string data does indeed prefix the requested string.<Marginale>A response to a <R n="simple_streaming_get"/> request corresponds to the notion of the <A href="https://github.com/oconnor663/bao/blob/master/docs/spec.md#combined-encoding-format">combined encoding format</A> of Bao.</Marginale>
-            </P>
-
-            <P>
-              A successful response consists of the length of the payload in bytes, followed by the result of performing a depth-first traversal of the string’s Merkle tree (visiting left children before right children), and emitting for each inner vertex the label of its left child followed by the label of its right child, and for each leaf vertex emitting the corresponding chunk. The client can verify the response by reconstructing all labels of the Merkle tree and asserting that all labels match the transmitted values — or the original digest, in case of the root.<Alj>TODO: add example, also mention buffering of trusted data</Alj>
-            </P>
-          </PreviewScope>
-
-          <P>
-            <Rb n="simple_streaming_get"/> requests correctly implement the core feature of Bab — verified streaming. But they do so in a rather naïve way: whenever the label of a left child is emitted, that data is followed almost immediately by enough further data to compute that label from scratch. So why transmit it in the first place? Skipping the label of a left child means that the client needs to buffer the label of the right child without being able to verify it until the left child has been reconstructed. The response to a <R n="simple_streaming_get"/> request minimizes the buffering of unverified data. If the client commits to buffering up to a certain amount of unverified data, then we can define a response stream that gets to omit some labels.
-          </P>
-
-          <P>
-            The <R n="chunk_size"/> used by <Sidenote note={<>Or <M post=",">2 \cdot <R n="width"/></M> whichever is greater. Typically, the <R n="chunk_size"/> is significantly greater.</>}>Bab</Sidenote> serves as a lower bound of how much untrusted data peers must already be willing to buffer (because a chunk can only be verified once <Em>all</Em> of its bytes were received). Hence, it makes sense to allow at least as much buffering of unverified metadata. <Rb n="william3"/> (and hence also Blake3-based Bao) has a <R n="chunk_size"/> of 1024 bytes, and a <R n="width"/> of 32 bytes. This means that clients can reconstruct all but one out of <M><MFrac num="1024" de="32"/> = 32</M> left labels without increasing the length of the longest possible sequences of unverified data to buffer. For each of those 32 left labels, the right label must also be transmitted, so the total amount of all verification metadata is reduced to <M><MFrac num="32 + 1" de="32 + 32"/> = <MFrac num="33" de="64"/> \approx <MFrac num="1" de="2"/></M>. In Bao (or with <R n="simple_streaming_get"/> requests for <R n="william3"/>), the overhead of verfication metadata is roughly 3.125%. A more sophisticated response format that skips 31 out of 32 left labels brings the overhead down to roughly 1.611%.
-          </P>
-
-          <P>
-            If a client is willing to buffer even more unverified metadata than just the <R n="chunk_size"/>, then the response can omit some right labels as well. As an intuitive extreme, consider a client willing to buffer a number of unverified bytes equal to the length of the requested string. In that case, the server can omit <Em>all</Em> verification metadata — the client simply reconstructs all tree labels from the raw chunk data.
-          </P>
-
-          <P>
-            We now give a precise definition of minimal responses to streaming requests from a client that is willing to buffer a particular, fixed amount of unverified bytes. The computations are not immediately obvious, but not terribly complicated either.
-          </P>
-        </Hsection>
-
-        <Hsection n="sec_dynamic_streaming" title="Dynamic Get Requests">
-          <PreviewScope>
-            <P>
-              A <DefType n="dynamic_streaming_get" r="DynamicStreamingGet"/> request consists of a Bab digest, and a number of bytes of data that the client is willing to buffer<Marginale>If the buffer capacity is zero, the <R n="dynamic_streaming_get"/> request is equivalent to a <R n="simple_streaming_get"/> request. If the capacity is <M>2^<Curly>64</Curly> - 1</M>, the <R n="dynamic_streaming_get"/> request is equivalent to a <R n="batch_get"/> request.</Marginale> without being able to verify them. A successful response stream is similar to the response stream to a <R n="simple_streaming_get"/> request, but with omissions as defined below. The client can verify the response by reconstructing all labels of the Merkle tree and asserting that all labels match the transmitted values — or the original digest, in case of the root.
-            </P>
-          </PreviewScope>
-
-          <P>
-            We now give a pseudocode function that assigns to every inner vertex of the Merkle tree whether the labels of its left and right children should be emitted into the response stream or not.
-          </P>
-
-          <Pseudocode n="code_include_labels" lineNumbering>
-            <FunctionItemUntyped
-              comment={<>Call <R n="include_labels"/> with the root of the tree as the first argument and the buffer capacity for unverified data as both the second and third argument. The function then sets <Code>include_left_lbl</Code> and <Code>include_right_lbl</Code> fields on <Em>each</Em> vertex in the tree that indicate which child labels the vertex contributes to the response stream.</>}
-              id={"include_labels"}
-              args={[
-                ["v", "lbls_v"],
-                ["available", "lbls_av"],
-                ["max", "lbls_max"],
-              ]}
-              body={[
-                <>
-                  <If
-                    cond={<>
-                      <R n="lbls_av"/> <Gte/> <ApplicationRaw fun="leaves" args={[
-                        <Access at="left"><R n="lbls_v"/></Access>]}
-                      /> * <R n="chunk_size"/> + <R n="width"/>
-                    </>}
-                    body={[
-                      {
-                        commented: {
-                          comment: <>
-                            We have sufficient available capacity to send all <Rs n="chunk"/> of the left subtree without any verification metadata. Mark all vertices in the left subtree as not including their labels, also mark the current left label.
-                          </>,
-                          segment: <ApplicationRaw fun="skip_all_labels" args={[<Access at="left"><R n="lbls_v"/></Access>]}/>,
-                          dedicatedLine: true,
-                        }
-                      },
-                      <AssignRaw lhs={<Access at="include_left_lbl"><R n="lbls_v"/></Access>}>false</AssignRaw>,
-                      <AssignRaw op="-=" lhs={<R n="lbls_av"/>}>
-                        <ApplicationRaw fun="leaves" args={[
-                          <Access at="left"><R n="lbls_v"/></Access>]}
-                        /> * <R n="chunk_size"/> + <R n="width"/>
-                      </AssignRaw>,
-                      "",
-                      {
-                        commented: {
-                          comment: <>
-                            Can we skip our right label as well?
-                          </>,
-                          segment: <>
-                            <If cond={
-                              <><R n="lbls_av"/> <Gte/> <R n="width"/></>
-                            } body={[
-                              <AssignRaw lhs={<Access at="include_right_lbl"><R n="lbls_v"/></Access>}>false</AssignRaw>,
-                              <AssignRaw op="-=" lhs={<R n="lbls_av"/>}><R n="width"/></AssignRaw>,
-                            ]}/> <Else body={[
-                              <AssignRaw lhs={<Access at="include_right_lbl"><R n="lbls_v"/></Access>}>true</AssignRaw>,
-                              <AssignRaw lhs={<R n="lbls_av"/>}><R n="lbls_max"/></AssignRaw>,
-                            ]}/>
-                          </>,
-                          dedicatedLine: true,
-                        }
-                      },
-                      "",
-                      {
-                        commented: {
-                          comment: "Recursively process the right child with the remaining capacity.",
-                          segment: <Application fun="include_labels" args={[
-                            <Access at="right"><R n="lbls_v"/></Access>,
-                            <R n="lbls_av"/>,
-                            <R n="lbls_max"/>,
-                          ]}/>,
-                          dedicatedLine: true,
-                        }
-                      },                      
-                    ]}
-                  /> <Else body={[
+        <Pseudocode n="code_include_labels" lineNumbering>
+          <FunctionItemUntyped
+            comment={<>Call <R n="include_labels"/> with the root of the tree as the first argument and the desired <R n="delay"/> plus one as both the second and third argument. The function then sets an <Code>omit_label</Code> flag on each vertex in the tree to be omitted from the <R n="perfect"/>.</>}
+            id={"include_labels"}
+            args={[
+              ["v", "lbls_v"],
+              ["available", "lbls_av"],
+              ["max", "lbls_max"],
+            ]}
+            body={[
+              <>
+                <If
+                  cond={<>
+                    <R n="lbls_av"/> <Gte/> <ApplicationRaw fun="count_leaves" args={[
+                      <Access at="left"><R n="lbls_v"/></Access>]}
+                    /> * <R n="chunk_size"/>
+                  </>}
+                  body={[
                     {
                       commented: {
                         comment: <>
-                          We cannot omit all labels for the left subtree. We include the label of our right child, so that the left subtree becomes verifiable as soon as possible. For our right subtree, we can hence start with full buffer capacity again.
+                          We have enough budget to send all <Rs n="chunk"/> of the left subtree without any verification metadata.
                         </>,
-                        segment: <AssignRaw lhs={<Access at="include_right_lbl"><R n="lbls_v"/></Access>}>true</AssignRaw>,
+                        segment: <ApplicationRaw fun="omit_all_labels" args={[<Access at="left"><R n="lbls_v"/></Access>]}/>,
                         dedicatedLine: true,
                       }
                     },
-                    <Application fun="include_labels" args={[
-                      <Access at="right"><R n="lbls_v"/></Access>,
-                      <R n="lbls_max"/>,
-                      <R n="lbls_max"/>,
-                    ]}/>,
+                    <AssignRaw op="-=" lhs={<R n="lbls_av"/>}>
+                      <ApplicationRaw fun="count_leaves" args={[
+                        <Access at="left"><R n="lbls_v"/></Access>]}
+                      /> * <R n="chunk_size"/>
+                    </AssignRaw>,
                     "",
                     {
                       commented: {
                         comment: <>
-                          Can we at least skip <Em>our</Em> left label?
+                          Can we skip our right child’s label as well?
                         </>,
                         segment: <>
                           <If cond={
                             <><R n="lbls_av"/> <Gte/> <R n="width"/></>
                           } body={[
-                            <AssignRaw lhs={<Access at="include_left_lbl"><R n="lbls_v"/></Access>}>false</AssignRaw>,
+                            <AssignRaw lhs={<Access at="omit_label"><Access at="right"><R n="lbls_v"/></Access></Access>}>true</AssignRaw>,
                             <AssignRaw op="-=" lhs={<R n="lbls_av"/>}><R n="width"/></AssignRaw>,
                           ]}/> <Else body={[
-                            <AssignRaw lhs={<Access at="include_left_lbl"><R n="lbls_v"/></Access>}>true</AssignRaw>,
-                            <AssignRaw lhs={<R n="lbls_av"/>}><R n="lbls_max"/></AssignRaw>,
+                            {
+                              commented: {
+                                comment: <>We do not omit the label of the right child. Hence, the current <R n="unverifiable_seq"/> is terminated and the next part of verification can resume with a full budget.</>,
+                                segment: <AssignRaw lhs={<R n="lbls_av"/>}><R n="lbls_max"/></AssignRaw>,
+                                dedicatedLine: true,
+                              }
+                            },
                           ]}/>
                         </>,
                         dedicatedLine: true,
                       }
                     },
                     "",
-                      {
-                        commented: {
-                          comment: "Recursively process the left child with the remaining capacity.",
-                          segment: <Application fun="include_labels" args={[
-                            <Access at="left"><R n="lbls_v"/></Access>,
-                            <R n="lbls_av"/>,
-                            <R n="lbls_max"/>,
-                          ]}/>,
-                          dedicatedLine: true,
-                        }
-                      },
-                  ]}/>
-                </>,
-              ]}
-            />
-          </Pseudocode>
+                    {
+                      commented: {
+                        comment: "Recursively process the right child with the remaining budget.",
+                        segment: <Application fun="include_labels" args={[
+                          <Access at="right"><R n="lbls_v"/></Access>,
+                          <R n="lbls_av"/>,
+                          <R n="lbls_max"/>,
+                        ]}/>,
+                        dedicatedLine: true,
+                      }
+                    },                      
+                  ]}
+                /> <Else body={[
+                  {
+                    commented: {
+                      comment: <>
+                        We cannot omit <Em>all</Em> labels for the left subtree. We include the label of our right child, so that the left subtree becomes verifiable as soon as possible. For our right subtree, we can hence start with full budget again.
+                      </>,
+                      segment: <Application fun="include_labels" args={[
+                        <Access at="right"><R n="lbls_v"/></Access>,
+                        <R n="lbls_max"/>,
+                        <R n="lbls_max"/>,
+                      ]}/>,
+                      dedicatedLine: true,
+                    }
+                  },
+                  "",
+                  {
+                    commented: {
+                      comment: <>
+                        Can we at least skip the label of our <Em>direct</Em> left child?
+                      </>,
+                      segment: <>
+                        <If cond={
+                          <><R n="lbls_av"/> <Gte/> <R n="width"/></>
+                        } body={[
+                          <AssignRaw lhs={<Access at="omit_label"><Access at="left"><R n="lbls_v"/></Access></Access>}>true</AssignRaw>,
+                          <AssignRaw op="-=" lhs={<R n="lbls_av"/>}><R n="width"/></AssignRaw>,
+                        ]}/> <Else body={[
+                          {
+                            commented: {
+                              comment: <>Not omitting the label of the left child terminates the current <R n="unverifiable_seq"/>. The next part of verification can resume with a full budget.</>,
+                              segment: <AssignRaw lhs={<R n="lbls_av"/>}><R n="lbls_max"/></AssignRaw>,
+                              dedicatedLine: true,
+                            }
+                          },
+                        ]}/>
+                      </>,
+                      dedicatedLine: true,
+                    }
+                  },
+                  "",
+                    {
+                      commented: {
+                        comment: "Recursively process the left child with the remaining budget.",
+                        segment: <Application fun="include_labels" args={[
+                          <Access at="left"><R n="lbls_v"/></Access>,
+                          <R n="lbls_av"/>,
+                          <R n="lbls_max"/>,
+                        ]}/>,
+                        dedicatedLine: true,
+                      }
+                    },
+                ]}/>
+              </>,
+            ]}
+          />
+        </Pseudocode>
 
+        <P>
+          <Alj inline>TODO example</Alj>
+        </P>
+      </Hsection>
+
+      <Hsection n="slice_streaming" title="Slice Streaming">
+        <P>
+          All optimized verifiable streams can also be used for verifiable streaming of slices by incorporating some changes.
+          A label or chunk that would not be transmitted as part of the <R n="baseline_chunk"/> is also not part of the optimized chunk <Sidenote note="This simply filters down the stream from a full-string stream to a slice stream.">stream</Sidenote>.
+          The labels of vertices which do not lie on a path from a chunk of the slice to the root but which would be included in the <R n="baseline_chunk"/> are never <Sidenote note={<>
+            If such a label was omitted, the label of the corresponding parent vertex would be impossible to reconstruct.
+          </>}>omitted</Sidenote>.
+        </P>
+
+        <P>
+          <Rcb n="fig_slice_light"/> and <Rc n="fig_slice_grouped"/> give examples of a left and right label respectively being included in an optimized slice stream despite being omitted when requesting the full string with the same optimizations.
+        </P>
+
+        <Fig
+          n="fig_slice_light"
+          // wrapperTagProps={{clazz: "wide"}}
+          title="Light Verifiable Slice Stream Example"
+          caption={
+            <>
+              <P>
+                The verification data to send for <Code>hello_world</Code> with a <R n="chunk_size"/> of two with the <R n="light"/> format when requesting the slice <Code>o_worl</Code>. The label of vertex <M>3</M> is not omitted, despite being omitted in non-slice requests with the <R n="light"/> (compare <Rc n="fig_ex_light"/>).
+              </P>
+            </>
+          }
+        >
           <P>
-            <Alj inline>TODO: example</Alj>
+            <Turbo2><Application fun="lbl" args={["9"]}/></Turbo2>, <Turbo3><Application fun="lbl" args={["3"]}/></Turbo3>, <Turbo4><Application fun="lbl" args={["6"]}/></Turbo4>, <Turbo9><Application fun="lbl" args={["7"]}/></Turbo9>, <Turbo10><Application fun="lbl" args={["8"]}/></Turbo10>, <Turbo11><Code>o_</Code></Turbo11>, <Turbo12><Code>wo</Code></Turbo12>, <Turbo13><Application fun="lbl" args={["10"]}/></Turbo13>, <Turbo14><Application fun="lbl" args={["11"]}/></Turbo14>, <Turbo15><Code>rl</Code></Turbo15>.
           </P>
+          <Img
+            src={<ResolveAsset asset={["graphics", "slice_light.svg"]} />}
+            alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the verified data stream for the subslice *o_worl* to the light encoding."
+          />
+        </Fig>
 
+        <Fig
+          n="fig_slice_grouped"
+          // wrapperTagProps={{clazz: "wide"}}
+          title="1-Grouped Light Verifiable Slice Stream Example"
+          caption={
+            <>
+              <P>
+                The verification data to send for <Code>hello_world</Code> with a <R n="chunk_size"/> of two with the <R n="kgrouped">1-grouped light verifiable stream</R> format when requesting the slice <Code>o_worl</Code>. The label of vertex <M>11</M> is not omitted, despite being omitted in non-slice requests with the <R n="kgrouped">1-grouped light verifiable stream</R> (compare <Rc n="fig_ex_kgrouped"/>).
+              </P>
+            </>
+          }
+        >
           <P>
-            An interesting special case of <R n="include_labels"/> is that of <R n="lbls_max"/> being equal to <M post="."><R n="chunk_size"/> + <R n="width"/></M> The function becomes significantly more simple: all right child labels are be emitted, and the left child label of some inner vertex is emitted if and only if the distance between the vertex and its leftmost leaf descendent is one greater than a number divisible by <M post="."><MFrac de={<R n="width"/>} num={<R n="chunk_size"/>}/></M>
+            <Turbo2><Application fun="lbl" args={["9"]}/></Turbo2>, <Turbo3><Application fun="lbl" args={["3"]}/></Turbo3>, <Turbo4><Application fun="lbl" args={["6"]}/></Turbo4>, <Turbo11><Code>o_</Code></Turbo11>, <Turbo12><Code>wo</Code></Turbo12>, <Turbo14><Application fun="lbl" args={["11"]}/></Turbo14>, <Turbo15><Code>rl</Code></Turbo15>.
           </P>
+          <Img
+            src={<ResolveAsset asset={["graphics", "slice_1grouped_light.svg"]} />}
+            alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the verified data stream for the subslice *o_worl* to the 1-grouped light encoding."
+          />
+        </Fig>
 
+        <P>
+          In a system where clients can request slices, it stands to reason they might request several (non-overlapping) slices of the same string. Such non-overlapping slices have an overlap in their verification metadata: the streams include the labels of vertices that lie on a path from included chunks to the root, and these paths overlap towards the root. The closer two slices are, the higher is their overlap. In particular, let <M>a</M>, <M>b</M>, and <M>c</M> be slices such that <M>a</M> ends before <M>b</M> starts, and <M>b</M> ends before <M>c</M> starts.
+          Then the overlap between any path from the root to a leaf in the slice <M>c</M> and any path from the root to a leaf in <M>a</M> or <M>b</M> is included in the overlap beween the path from the root to the first chunk of <M>c</M> and the path from the root to the final chunk of <M>b</M>.
+          Likewise, the overlap between any path from the root to a leaf in the slice <M>a</M> and any path from the root to a leaf in <M>b</M> or <M>c</M> is included in the overlap beween the path from the root to the final chunk of <M>a</M> and the path from the root to the first chunk of <M>b</M>.
+        </P>
+
+        <PreviewScope>
           <P>
-            <Alj inline>TODO: example</Alj>
+            For the client to tell the server which parts of the verification metadata need not be included in a slice stream because the client already has that data, it hence suffices for the client to supply two integers between <M>0</M> and <M post=":">64</M> the <DefValue n="left_skip"/> indicates to omit from the stream the labels of the children of the first <R n="left_skip"/> vertices on the path from the root to the first chunk of the slice, and the <DefValue n="right_skip"/> indicates to omit from the stream the labels of the children of the first <R n="right_skip"/> vertices on the path from the root to the final chunk of the slice.
+            <Rcb n="fig_stream_slice_skip"/> gives an example.
           </P>
+        </PreviewScope>
 
+        <Fig
+          n="fig_stream_slice_skip"
+          // wrapperTagProps={{clazz: "wide"}}
+          title="Slice Skipping Example"
+          caption={
+            <>
+              <P>
+                Slice streaming with the <R n="baseline"/> format, a <R n="left_skip"/> of <M post=",">2</M> and a <R n="right_skip"/> of <M post=".">2</M>
+              </P>
+            </>
+          }
+        >
           <P>
-            Given the existence of such special cases, it can make sense to statically specify a buffering capacity for all participants in a system, and then apply that capacity to all requests, as described next.
+            <Turbo9><Application fun="lbl" args={["7"]}/></Turbo9>, <Turbo10><Application fun="lbl" args={["8"]}/></Turbo10>, <Turbo11><Code>o_</Code></Turbo11>, <Turbo12><Code>wo</Code></Turbo12>, <Turbo15><Code>rl</Code></Turbo15>.
           </P>
-        </Hsection>
+          <Img
+            src={<ResolveAsset asset={["graphics", "slice_skip.svg"]} />}
+            alt="A visualization of the Merkle tree for the string *hello_world*, listing in each vertex the data that that vertex contributes to the verified data stream for the subslice *o_worl* when left_skip and right_skip are set to two."
+          />
+        </Fig>
+      </Hsection>
 
-        <Hsection n="sec_static_streaming" title="Static Get Requests">
-          <PreviewScope>
-            <P>
-              A <DefType n="static_streaming_get" r="StaticStreamingGet"/> request consists of a single Bab digest, and the valid responses are exactly those of a <R n="dynamic_streaming_get"/> for the same digest and some statically fixed, well-known buffer capacity.
-            </P>
-          </PreviewScope>
+      <Hsection n="perfect_slice_streaming" title="Perfect Slice Streaming">
+        <P>
+          <Alj inline>TODO</Alj>
+        </P>
 
-          <P>
-            If the only <Code>get</Code> requests in a system are <R n="static_streaming_get"/> requests, then participants know in advance which tree labels will never be sent. They can forego storing those labels altogether, without loosing any performance.
-          </P>
-        </Hsection>
-
-        <Hsection n="sec_simple_slice" title="Simple Slice Requests">
-          <P>
-            Beyond verified streaming of full strings, the Merkle tree also enables verified srteaming of arbitrary slices. To introduce slice requests, we ignore buffering optimizations for a bit.
-          </P>
-
-          <PreviewScope>
-            <P>
-              A <DefType n="simple_slice" r="SimpleSlice"/> request consists of a Bab digest, the offset of the first chunk to request (an unsigned 64-bit integer), and the number of chunks in the slice (a natural number between <M>1</M> and <M>2^<Curly>64</Curly> - 1</M>, both inclusive). It asks for the corresponding substring of a string that hashes to the given digest, as well as interleaved verification metadata that allows verifying that the stream of incoming string data does indeed belong to that string.
-            </P>
-
-            <P>
-              There are three possible responses. First, the server can indicate that it does not have the requested data. Second, it can indicate that the slice is invalid (the sum of the offset and the length is greater than the length of the string divided by <R n="chunk_size"/>), in which case the response is identical to a successful response to a <R n="length"/> request.
-              If neither of these is the case, then the response consists of chunk data and verification metadata. The data to transmit is identical to that of a successful response to a <R n="simple_streaming_get"/> request, except that all metadata emitted by a Merkle tree node that does not lie on a path from the root to any of the chunks in the slice is omitted.
-            </P>
-          </PreviewScope>
-
-          <P>
-            <Alj inline>TODO: example</Alj>
-          </P>
-
-          <P>
-            When a client makes a slice request in a string for which it has already made prior slice requests, then the verification metadata of those old requests might overlap with the verification metadata for the new request. Ideally, the client should be able to compactly communicate already-available metadata to the server, so that it can be omitted from the response.
-          </P>
-
-          <P>
-            The metadata for any request consist of the inner nodes on all paths from the root to the requested chunks. Hence, the metadata for two non-overlapping chunks might overlap towards the root of the tree, but diverges towards the leaves (see <Rc n="fig_slice_meta"/>). This enables the client to compactly communicate which data the server can skip: for the paths from the root to the leftmost and rightmost chunk of the requested slice respectively, the client can supply the number of vertices whose emitted metadata to omit.
-          </P>
-        </Hsection>
-
-        <Hsection n="sec_pruned_slice" title="Pruned Slice Requests">
-          <PreviewScope>
-            <P>
-              A <DefType n="pruned_slice" r="PrunedSlice"/> request consists of a Bab digest, the offset of the first chunk to request (an unsigned 64-bit integer), the number of chunks in the slice (a natural number between <M>1</M> and <M>2^<Curly>64</Curly> - 1</M>, both inclusive), a number of vertices to skip on the path from the root to the first requested chunk (between 0 and 64), and a number of vertices to skip on the path from the root to the final requested chunk (between 0 and 64). It asks for the corresponding substring of a string that hashes to the given digest, as well as interleaved verification metadata that allows verifying that the stream of incoming string data does indeed belong to that string, assuming that the metadata for the indicated vertices is already available.
-            </P>
-
-            <P>
-              The response options to a <R n="pruned_slice"/> request are those of the response options to the corresponding <R n="simple_slice"/> request, except in a successful response, all the metadata emitted by any vertex that is amongst the first indicated vertices on the path from the root to either the first or the final chunk is omitted.<Alj>TODO: improve the wording. Give names to the offsets to skip.</Alj> 
-            </P>
-          </PreviewScope>
-
-          <P>
-            <Alj inline>TODO: example</Alj>
-          </P>
-        </Hsection>
-
-        <Hsection n="sec_dynamic_slice" title="Dynamic Pruned Slice Requests">
-          <PreviewScope>
-            <P>
-              A <DefType n="dynamic_pruned_slice" r="DynamicPrunedSlice"/> requests combine pruned slice requests with a dynamically supplied amount of buffer space for unverified data. Determining which metadata to skip requires its own algorithm, modified from <R n="include_labels"/>.<Alj inline> TODO properly write this section, write down the algorithm.</Alj>
-            </P>
-          </PreviewScope>
-
-          <P>
-            Note that the <R n="dynamic_pruned_slice"/> are expressive enough to encompass every single type of request we have defined.
-          </P>
-        </Hsection>
-
-        <Hsection n="sec_static_slice" title="Static Pruned Slice Requests">
-          <P>
-            <Alj inline>TODO: write this</Alj>
-          </P>
-        </Hsection>
-    </Hsection> */}
+      </Hsection>
+      
+    </Hsection>
 
     <Hsection title="References" n="bibliography" noNumbering>
       <Bibliography />
