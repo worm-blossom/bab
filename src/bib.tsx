@@ -7,7 +7,7 @@ export const bib: BibItemDeclaration[] = [
     item: `@online{blake3,
   author = {Jack O’Connor and Jean-Philippe Aumasson and Samuel Neves and Zooko Wilcox-O’Hearn},
   title = {BLAKE3},
-  year = 2019,
+  year = 2020,
   url = {https://github.com/BLAKE3-team/BLAKE3-specs/blob/master/blake3.pdf},
   urldate = {2024-09-01},
   note = {\\url{https://github.com/BLAKE3-team/BLAKE3-specs/blob/master/blake3.pdf}}
@@ -120,6 +120,33 @@ export const bib: BibItemDeclaration[] = [
         </P>
         <P>
           Logs are network services that implement the protocol operations for submissions and queries that are defined in this document.
+        </P>
+      </>
+    ),
+  },
+  {
+    item: `@article{daemen2018sound,
+  title={Sound hashing modes of arbitrary functions, permutations, and block ciphers},
+  author={Daemen, Joan and Mennink, Bart and Van Assche, Gilles},
+  journal={IACR Transactions on Symmetric Cryptology},
+  pages={197--228},
+  year={2018}
+}
+`,
+    asset: ["references", "daemen2018sound.pdf"],
+    blurb: (
+      <>
+        <P>
+          Cryptographic hashing modes come in many flavors, including Merkle-
+          Damgård with various types of strengthening, Merkle trees, and sponge functions. As
+          underlying primitives, these functions use arbitrary functions, permutations, or block
+          ciphers. In this work we provide three simple proofs, one per primitive type, that
+          cover all modes where the input to the primitive consists of message bits, chaining
+          value bits, and bits that only depend on the mode and message length. Our approach
+          generalizes and simplifies over earlier attempts of Dodis et al. (FSE 2009) and Bertoni
+          et al. (Int. J. Inf. Sec. 2014). We prove tight indifferentiability bounds for modes
+          using each of these three primitive types provided that the mode satisfies some easy
+          to verify conditions.
         </P>
       </>
     ),

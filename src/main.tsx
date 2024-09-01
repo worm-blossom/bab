@@ -334,7 +334,7 @@ const exp = (
 
       <Hsection n="instantiations" title="Instantiations">
         <P>
-          The choice of parameters for using Bab is flexible, but some care needs to be taken to create a secure (i.e., collision-resistant and preimage-resistant) hash function. <R n="hash_chunk"/> and <R n="hash_inner"/> must be secure hash functions themselves, and it must further be impossible to find an input to <R n="hash_chunk"/> and one to <R n="hash_inner"/> such that both yield the same digest. Instantiations may let <R n="hash_inner"/> ignore the length argument without compromising collision-resistance or preimage-resistance, at the cost of losing efficient string length proofs (see <Rc n="length_verification"/> for details).
+          The choice of parameters for using Bab is flexible, but some care needs to be taken to create a secure (i.e., collision-resistant and preimage-resistant) hash function. <R n="hash_chunk"/> and <R n="hash_inner"/> must be secure hash functions themselves, and it must further be impossible to find an input to <R n="hash_chunk"/> and one to <R n="hash_inner"/> such that both yield the same digest.
         </P>
 
         <P>
@@ -351,10 +351,10 @@ const exp = (
               Define <Application fun="hash_chunk" args={[<DefValue n="conv_chunk_chunk" r="chunk"/>, <DefValue n="conv_chunk_root" r="is_root"/>]}/> as applying <R n="conv_h"/> to the concatenation of
                 <Ul>
                   <Li>
-                    the byte <Code>0x00</Code> if <R n="conv_chunk_root"/> is <Code>false</Code>, or the byte <Code>0x01</Code> otherwise, and
+                    <R n="conv_chunk_chunk"/>, and
                   </Li>
                   <Li>
-                    <R n="conv_chunk_chunk"/>.
+                    the byte <Code>0x00</Code> if <R n="conv_chunk_root"/> is <Code>false</Code>, or the byte <Code>0x01</Code> otherwise.
                   </Li>
                 </Ul>
             </P>
@@ -363,16 +363,16 @@ const exp = (
               Define <Application fun="hash_inner" args={[<DefValue n="conv_inner_l" r="left"/>, <DefValue n="conv_inner_r" r="right"/>, <DefValue n="conv_inner_len" r="len"/>, <DefValue n="conv_inner_root" r="is_root"/>]}/> as applying <R n="conv_h"/> to the concatenation of
                 <Ul>
                   <Li>
-                    the byte <Code>0x02</Code> if <R n="conv_inner_root"/> is <Code>false</Code>, or the byte <Code>0x03</Code> otherwise,
-                  </Li>
-                  <Li>
-                    <R n="conv_inner_len"/> encoded as an unsigned big-endian 64-bit integer,
-                  </Li>
-                  <Li>
-                    <R n="conv_inner_l"/>, and
+                    <R n="conv_inner_l"/>,
                   </Li>
                   <Li>
                     <R n="conv_inner_r"/>.
+                  </Li>
+                  <Li>
+                    <R n="conv_inner_len"/> encoded as an unsigned big-endian 64-bit integer, and
+                  </Li>
+                  <Li>
+                    the byte <Code>0x02</Code> if <R n="conv_inner_root"/> is <Code>false</Code>, or the byte <Code>0x03</Code> otherwise.
                   </Li>
                 </Ul>
             </P>
@@ -382,7 +382,7 @@ const exp = (
         <Hsection n="instantiations_william" title="WILLIAM3">
           <PreviewScope>
             <P>
-              <DefFunction n="william3" r="WILLIAM3" rb="WILLIAM3"/> is a Bab instantiation that is almost identical to BLAKE3. There are only two differences: <R n="william3"/> does not supply chunk indices into the label computation for chunks, and <R n="william3"/> incorporates a length value into the label computation of inner tree vertices. <Rb n="william3"/> has a normal hash mode and a keyed hash mode (based on a 256 bit key); unlike BLAKE3 it does not support a key derivation mode, and it does not allow for extendable output.
+              <DefFunction n="william3" r="WILLIAM3" rb="WILLIAM3"/> is a Bab instantiation that is almost identical to BLAKE3. There are three differences: first, <R n="william3"/> does not supply chunk indices into the label computation for chunks. Second, <R n="william3"/> incorporates a length value into the label computation of inner tree vertices. And third, <R n="william3"/> uses different constants <M>IV_0, \ldots, IV_7</M> than BLAKE3. <Rb n="william3"/> has a normal hash mode and a keyed hash mode (based on a 256 bit key, by setting the key words <M>k_0</M> to <M>k_7</M> to the key just like BLAKE3); unlike BLAKE3 it does not support a key derivation mode, and it does not allow for extendable output.
             </P>
 
             <P>
@@ -390,11 +390,26 @@ const exp = (
             </P>
 
             <P>
-              The <R n="hash_chunk"/> function is almost identical to the BLAKE3 computation of <Em>chunk chaining values</Em>, with a single exception<Marginale>Explained in <Rc n="chunk_indices"/>.</Marginale>: where BLAKE3 sets the <Code>t</Code> parameter of its compression function to the chunk index, <R n="william3"/> sets it to 0.
+              Where BLAKE3 uses its constants <M post=",">IV_0, \ldots, IV_7</M> <R n="william3"/> uses the following constants instead:<Marginale>The constants form the BLAKE3 digest of the ASCII-encoded string <Code>WILLIAM3</Code>.</Marginale><Marginale>Using diferent constants than BLAKE3 ensures that BLAKE3 and <R n="william3"/> produce non-equal digests for equal inputs, even if the inputs fit into a single chunk.</Marginale>
+            </P>
+
+            <Ul>
+              <Li><M>IV_0</M>: <Code>0x3b638fc8</Code></Li>
+              <Li><M>IV_1</M>: <Code>0xf2fb6841</Code></Li>
+              <Li><M>IV_2</M>: <Code>0x8325a36b</Code></Li>
+              <Li><M>IV_3</M>: <Code>0x4718ffb0</Code></Li>
+              <Li><M>IV_4</M>: <Code>0x7de457ac</Code></Li>
+              <Li><M>IV_5</M>: <Code>0x301393a8</Code></Li>
+              <Li><M>IV_6</M>: <Code>0x45466a79</Code></Li>
+              <Li><M>IV_7</M>: <Code>0xeea3286b</Code></Li>
+            </Ul>
+
+            <P>
+              The <R n="hash_chunk"/> function is almost identical to the BLAKE3 computation of <Em>chunk chaining values</Em>, with a single exception<Marginale>Explained in <Rc n="chunk_indices"/>.</Marginale> (beyond the changed <M>IV_0, \ldots, IV_7</M> constants): where BLAKE3 sets the <Code>t</Code> parameter of its compression function to the chunk index, <R n="william3"/> sets it to 0.
             </P>
 
             <P>
-              The <R n="hash_inner"/> function is almost identical to the BLAKE3 computation of <Em>parent node chaining values</Em>, with a single exception<Marginale>Explained in <Rc n="length_verification"/>.</Marginale>: whereas BLAKE3 sets the <Code>t</Code> parameter of its compression function to 0, <R n="william3"/> sets <Code>t</Code> to the third argument (the length value) of <R n="hash_chunk"/> (as an unsigned <Em>little</Em>-endian 64-bit integer).
+              The <R n="hash_inner"/> function is almost identical to the BLAKE3 computation of <Em>parent node chaining values</Em>, with a single exception<Marginale>Explained in <Rc n="length_verification"/>.</Marginale> (beyond the changed <M>IV_0, \ldots, IV_7</M> constants): whereas BLAKE3 sets the <Code>t</Code> parameter of its compression function to 0, <R n="william3"/> sets <Code>t</Code> to the third argument (the length value) of <R n="hash_chunk"/> (as an unsigned <Em>little</Em>-endian 64-bit integer).
             </P>
           </PreviewScope>
         </Hsection>
@@ -522,7 +537,7 @@ const exp = (
       <Hsection n="slice_verification" title="Slice Verification">
         <PreviewScope>
           <P>
-            The Merkle-tree design allows for verifiable streaming of any slice (of chunks) within a string of known digest. Assume a client wants to receive some number of chunks, starting at some chunk offset. The response data is defined with the same technique as for the <R n="baseline"/>: the transmission of each chunk <Em>in the slice</Em> is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. Chunks outside the slice do not contribute any data. Again, each label is transmitted at most once. Since the length of the slice is known to the client, the response need not be prefixed by the length. We call this transmission the <Def n="baseline_chunk" r="baseline verifiable chunk stream"/>. <Rcb n="fig_stream_slice"/> shows an example of which data needs to be transmitted when the client requests three chunks, starting at offset two (zero-indexed).
+            The Merkle-tree design allows for verifiable streaming of any slice (of chunks) within a string of known digest. Assume a client wants to receive some number of chunks, starting at some chunk offset. The response data is defined with the same technique as for the <R n="baseline"/>: the transmission of each chunk <Em>in the slice</Em> is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. Chunks outside the slice do not contribute any data. Again, each label is transmitted at most once. Since the length of the slice is known to the client, the response need not be prefixed by the length. We call this transmission the <Def n="baseline_slice" r="baseline verifiable slice stream"/>. <Rcb n="fig_stream_slice"/> shows an example of which data needs to be transmitted when the client requests three chunks, starting at offset two (zero-indexed).
           </P>
         </PreviewScope>
 
@@ -620,19 +635,13 @@ const exp = (
         </P>
 
         <P>
-          A Bab instantiation can choose to simply ignore the length argument in <R n="hash_inner"/>. This can simplify the implementation, but means losing constant-size length proofs. Such an instantiation can still use the same technique as BLAKE3 for logarithmically-sized length proofs: supply the length, followed by the verification data for a slice consisting of the final chunk of the string.
-        </P>
-
-        <P>
-          For secure, constant-size length proofs, it would suffice to factor the length only into the computation of the root label, but ignore it in the computation of non-root inner labels. Bab <Em>can</Em> be instantiated to this effect: since <R n="hash_inner"/> takes an <Code>is_root</Code> flag as an argument, an instantiation can choose to only factor the length into the label computation if <Code>is_root</Code> is <Code>true</Code>. <R n="william3"/> incorporates the length into all node primarily for <Sidenote note={<>
-            Although it would be possible to implement root-only length-incorporation in a branchless manner: treat <Code>is_root</Code> as a number (either zero or one), and multiply the length with that number before incorporating it. 
-          </>}>simplicity</Sidenote>.
+          Even when short length proofs are not needed, a Bab instantiation must not ignore the length argument in <R n="hash_inner"/>. Doing so opens up <A href="https://github.com/oconnor663/bao/issues/41">certain attacks</A> where an attacker can create invalid trees whose <R n="baseline_slice"/> would pass verification for certain slices.
         </P>
       </Hsection>
 
       <Hsection n="why_is_root" title="The is_root Flag">
         <P>
-          Both <R n="hash_chunk"/> and <R n="hash_inner"/> take a boolean <Code>is_root</Code> flag as an argument. This flag <Em>must</Em> influence the output to guard against <A href="https://en.wikipedia.org/wiki/Length_extension_attack">length extension attacks</A>. The flag ensures <Bib item="bertoni2014sufficient">final-node separability</Bib> (called <Quotes>subtree-freeness</Quotes> by the BLAKE3 authors), which prevents length extension attacks. Ignoring the flag does <Em>note</Em> make the resulting hash function insecure, but it does open up length-extension attacks.
+          Both <R n="hash_chunk"/> and <R n="hash_inner"/> take a boolean <Code>is_root</Code> flag as an argument. This flag <Em>must</Em> influence the output to guard against <A href="https://en.wikipedia.org/wiki/Length_extension_attack">length extension attacks</A>. The flag ensures <Bib item="daemen2018sound">subtree-freeness</Bib> (also called <Bib item="bertoni2014sufficient">final-node separability</Bib>), which prevents length extension attacks. Ignoring the flag does <Em>not</Em> make the resulting hash function insecure, but it does open up length-extension attacks.
         </P>
       </Hsection>
 
@@ -989,8 +998,8 @@ const exp = (
       <Hsection n="slice_streaming" title="Slice Streaming">
         <P>
           All optimized verifiable streams can also be used for verifiable streaming of slices, by incorporating two changes.
-          First, a label or chunk that would not be transmitted as part of the <R n="baseline_chunk"/> is also not part of the optimized chunk <Sidenote note="This simply filters down the stream from a full-string stream to a slice stream.">stream</Sidenote>.
-          And second, the labels of vertices which do <Em>not</Em> lie on a path from a chunk of the slice to the root but which <Em>would</Em> be included in the <R n="baseline_chunk">baseline verifiable <Strong>chunk</Strong> stream</R> are <Em>never</Em> <Sidenote note={<>
+          First, a label or chunk that would not be transmitted as part of the <R n="baseline_slice"/> is also not part of the optimized chunk <Sidenote note="This simply filters down the stream from a full-string stream to a slice stream.">stream</Sidenote>.
+          And second, the labels of vertices which do <Em>not</Em> lie on a path from a chunk of the slice to the root but which <Em>would</Em> be included in the <R n="baseline_slice">baseline verifiable <Strong>chunk</Strong> stream</R> are <Em>never</Em> <Sidenote note={<>
             If such a label was omitted, the label of the corresponding parent vertex would be impossible to reconstruct.
           </>}>omitted</Sidenote>.
         </P>
