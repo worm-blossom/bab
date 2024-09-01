@@ -229,7 +229,7 @@ const exp = (
 
     <Hsection n="the_function" title="The Bab Hash Function">
       <P>
-        Like BLAKE3, Bab hashes an input string by splitting it into chunks, and arranging the chunks as the roots of a deterministically constructed, <A href="https://en.wikipedia.org/wiki/Binary_tree">binary</A>, <A href="https://en.wikipedia.org/wiki/Merkle_tree">Merkle-tree</A>; the label of the root becomes the digest of the input.
+        Like BLAKE3, Bab hashes an input string by splitting it into chunks, and arranging the chunks as the roots of a deterministically constructed, <A href="https://en.wikipedia.org/wiki/Binary_tree">binary</A> <A href="https://en.wikipedia.org/wiki/Merkle_tree">Merkle-tree</A>; the label of the root becomes the digest of the input.
       </P>
 
       <Hsection n="parameters" title="Parameters">
