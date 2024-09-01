@@ -1071,6 +1071,16 @@ const exp = (
       
     </Hsection>
 
+    <Hsection n="conclusion" title="Conclusion">
+      <P>
+        Peer-to-peer content-addressable-storage systems without verifiable streaming force peers to choose between two undesirable options: either they discard unbounded amounts of data upon connection failures, making it unlikely to ever receive large strings over unreliable connections, or they persist untrusted data, turning them into a free storage backend for malicious peers. Verifiable streaming reduces the length of maximal sequences of untrusted data to a constant, configurable amount, thus making it feasible to discard unverified data when a connection fails.
+      </P>
+
+      <P>
+        <R n="the_function">Bab</R> is an efficient and flexible family of hash functions that enable streaming verification of strings. Its <R n="william3"/> instantiation is close to the popular BLAKE3 hash function. Unlike BLAKE3-based systems (i.e., <A href="https://github.com/oconnor663/bao">Bao</A>), Bab-based systems support <R n="length_verification">constant-size length proofs</R> for strings of known digest. We have presented <R n="optimizations">optimization techniques</R> for minimizing the metadata overhead of streaming verification that are applicable both to Bab and Bao.
+      </P>
+    </Hsection>
+
     <Hsection title="References" n="bibliography" noNumbering>
       <Bibliography />
     </Hsection>
