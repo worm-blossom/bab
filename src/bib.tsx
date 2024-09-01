@@ -4,6 +4,35 @@ import { BigO, BigTheta, Curly } from "./macros.tsx";
 
 export const bib: BibItemDeclaration[] = [
   {
+    item: `@online{blake3,
+  author = {Jack O’Connor and Jean-Philippe Aumasson and Samuel Neves and Zooko Wilcox-O’Hearn},
+  title = {BLAKE3},
+  year = 2019,
+  url = {https://github.com/BLAKE3-team/BLAKE3-specs/blob/master/blake3.pdf},
+  urldate = {2024-09-01},
+  note = {\\url{https://github.com/BLAKE3-team/BLAKE3-specs/blob/master/blake3.pdf}}
+}`,
+    asset: ["references", "blake3.pdf"],
+    blurb: (
+      <>
+        <P>
+          We present BLAKE3, an evolution of the BLAKE2 cryptographic hash that is both faster
+          and also more consistently fast across different platforms and input sizes. BLAKE3
+          supports an unbounded degree of parallelism, using a tree structure that scales up
+          to any number of SIMD lanes and CPU cores. On Intel Cascade Lake-SP, peak
+          single-threaded throughput is 4× that of BLAKE2b, 8× that of SHA-512, and 12×
+          that of SHA-256, and it can scale further using multiple threads. BLAKE3 is also
+          efficient on smaller architectures: throughput on a 32-bit ARM1176 core is 1.3× that
+          of SHA-256 and 3× that of BLAKE2b and SHA-512. Unlike BLAKE2 and SHA-2, with
+          different variants better suited for different platforms, BLAKE3 is a single algorithm
+          with no variants. It provides a simplified API supporting all the use cases of BLAKE2,
+          including keying and extendable output. The tree structure also supports new use
+          cases, such as verified streaming and incremental updates.
+        </P>
+      </>
+    ),
+  },
+  {
     item: `@inproceedings{tamassia2003authenticated,
   title={Authenticated data structures},
   author={Tamassia, Roberto},
@@ -26,7 +55,7 @@ export const bib: BibItemDeclaration[] = [
   {
     item: `@article{bertoni2014sufficient,
   title={Sufficient conditions for sound tree and sequential hashing modes},
-  author={Bertoni, Guido and Daemen, Joan and Peeters, Micha{\"e}l and Van Assche, Gilles},
+  author={Bertoni, Guido and Daemen, Joan and Peeters, Michaël and Van Assche, Gilles},
   journal={International Journal of Information Security},
   volume={13},
   pages={335--353},

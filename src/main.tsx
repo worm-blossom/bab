@@ -116,7 +116,7 @@ import {
 } from "./macros.tsx";
 import { TreeItems } from "./macros.tsx";
 import { GeoDistribution } from "./macros.tsx";
-import { Access, ApplicationRaw, Assign, AssignRaw, Blockquote, CommentLine, DefField, DefFunction, DefType, Div, FunctionItemUntyped, Gte, Hr, Rb } from "../deps.ts";
+import { Access, ApplicationRaw, Assign, AssignRaw, Blockquote, CommentLine, DefField, DefFunction, DefType, Div, FunctionItemUntyped, Gte, Hr, Rb, Strong } from "../deps.ts";
 import { VisualizeVerification } from "./macros.tsx";
 
 const ctx = new Context();
@@ -179,7 +179,7 @@ const exp = (
     abstract={
       <>
         <P>
-          Bab is a construction for building <A href="https://en.wikipedia.org/wiki/Cryptographic_hash_function">secure hash functions</A>, heavily inspired by Blake3. Bab hashes allow for streaming verification of a string, similar to the Blake3-based Bao algorithm. We discuss several optimization techniques that go beyond the Bao specification. Further, unlike Blake3 and Bao, Bab digests allow for constant-sized length proofs of their strings.
+          Bab is a family of <A href="https://en.wikipedia.org/wiki/Cryptographic_hash_function">secure hash functions</A>, heavily inspired by <A href="https://github.com/BLAKE3-team/BLAKE3/">BLAKE3</A>. Bab hashes allow for streaming verification of strings, similar to the BLAKE3-based <A href="https://github.com/oconnor663/bao">Bao</A> algorithm. We discuss several optimization techniques that go beyond the Bao specification. Further, unlike BLAKE3 and Bao, Bab digests allow for constant-sized length proofs of their strings.
         </P>
       </>
     }
@@ -193,18 +193,18 @@ const exp = (
     <Hsection n="introduction" title="Introduction">
       <P>
         <A href="https://en.wikipedia.org/wiki/Content-addressable_storage">Content-addressable storage</A> lets users refer to strings (files) by a secure hash. Bab is a specification for a hash function specifically designed for usage in peer-to-peer content-addressable storage systems.
-      </P>      
-
-      <P>
-        The key feature of Bab is that it allows holders of a string to authenticate any substring as occuring in the original string. Content-addressed storage systems without this feature face a problem in byzanthine environments. Suppose a client requests the string corresponding to some hash. The server replies with some data, but the connection is interrupted before the full string was transfered. What should the client do?
       </P>
 
       <P>
-        It could store the data it received, and later it could issue a request for the same string, resuming at the correct offset. But that request will fail if the orginal server fed it garbage, and the client will be unable to tell which of its two communication partners acted maliciously. Also, the server might have sent it data that is illegal to store. Hence, a careful client should discard all incomplete data it received. But this makes it highly unlike to successfully transfer large strings over an unreliable network.
+        The key feature of Bab is streaming verification of a string: as a program reads a string, it can verify at regular intervals that the prefix read so far is indeed part of a string hashing to some target digest. Content-addressed storage systems without this feature face a problem in byzantine environments. Suppose a client requests the string corresponding to some digest. The server replies with some data, but the connection is interrupted before the full string was transfered. What should the client do?
       </P>
 
       <P>
-        When strings are hashed with Bab, servers embed into the data stream efficiently verifiable proofs that the data they have sent so far is indeed part of the requested string. More specifically, Bab enables the following features (all of which will be explained in detail in <Rc n="rationale"/>):
+        It could store the data it received, and could later issue a request for the same string, resuming at the correct offset. But that request will fail if the orginal server fed it garbage, and the client will be unable to tell which of its two communication partners acted maliciously. Further, the server might have sent it data that is illegal to store. Hence, a careful client should not persist incomplete data. But this makes it unlikely to successfully receive large strings over an unreliable network.
+      </P>
+
+      <P>
+        When strings are hashed with Bab, servers can embed into the data stream small proofs that the data they sent so far is indeed prefixing the requested string. More specifically, Bab enables the following features (all explained in detail in <Rc n="rationale"/>):
       </P>
 
       <Ul>
@@ -215,22 +215,22 @@ const exp = (
       </Ul>
 
       <P>
-        Bab employs many of the same techniques as the <A href="https://github.com/BLAKE3-team/BLAKE3-specs/blob/master/blake3.pdf">Blake3</A>-based <A href="https://github.com/oconnor663/bao/blob/master/docs/spec.md">Bao</A> spec. Key differences are short proofs of string length, more efficient slice requests, and a hash-function-agnostic specification. Bao is a byproduct of a well-designed general-purpose hash function, whereas Bab is a special-purpose hash function that gets to add features beyond Bao’s capabilities.
+        Bab employs many of the same techniques as the <Bib item="blake3">BLAKE3-based</Bib> <A href="https://github.com/oconnor663/bao/blob/master/docs/spec.md">Bao</A> specification. Key differences are short proofs of string length, more efficient slice requests, and a hash-function-agnostic specification. Bao is a byproduct of a well-designed general-purpose hash function, whereas Bab is a family of special-purpose hash functions that gets to add features beyond Bao’s capabilities.
       </P>
 
       <P>
-        We first define Bab in <Rc n="the_function"/>, before thoroughly explaining and justifying the design in <Rc n="rationale"/>, both from a high-level view and in its details. We examine optimizations for verified streaming in <Rc n="optimizations"/>.
+        We define Bab in <Rc n="the_function"/>, before explaining and justifying the design in <Rc n="rationale"/>, both from a high-level view and in its details. We examine optimizations for verified streaming in <Rc n="optimizations"/>.
       </P>
     </Hsection>
 
     <Hsection n="the_function" title="The Bab Hash Function">
       <P>
-        Like Blake3, Bab hashes an input string by splitting it into chunks, arranging the chunks as the roots of a <A href="https://en.wikipedia.org/wiki/Binary_tree">binary</A>, <A href="https://en.wikipedia.org/wiki/Binary_tree#complete">left-full</A> <A href="https://en.wikipedia.org/wiki/Merkle_tree">Merkle-tree</A>; the label of the root becomes the digest of the input.
+        Like BLAKE3, Bab hashes an input string by splitting it into chunks, and arranging the chunks as the roots of a <A href="https://en.wikipedia.org/wiki/Binary_tree">binary</A>, <A href="https://en.wikipedia.org/wiki/Binary_tree#complete">left-full</A> <A href="https://en.wikipedia.org/wiki/Merkle_tree">Merkle-tree</A>; the label of the root becomes the digest of the input.
       </P>
 
       <Hsection n="parameters" title="Parameters">
         <P>
-          Bab leaves open some paramters, they need to be given as <Quotes>input</Quotes> to the Bab specification. We now list the precise parameters of a Bab instantiation.
+          Bab leaves open some paramters, they need to be given as <Quotes>input</Quotes> to the Bab specification.
         </P>
 
         <PreviewScope>
@@ -313,7 +313,7 @@ const exp = (
           caption={
             <>
               <P>
-                The label computations for the example tree in <Rc n="fig_tree_unlabeled"/>.
+                The label computations for the example tree from <Rc n="fig_tree_unlabeled"/>.
               </P>
             </>
           }
@@ -332,7 +332,7 @@ const exp = (
         </P>
 
         <P>
-          We supply two useful instantiations: one based on arbitrary secure hash functions, and a more efficient one that closely mimics Blake3.
+          We supply two useful instantiations: one based on arbitrary secure hash functions, and a more efficient one that closely mimics BLAKE3.
         </P>
 
         <Hsection n="instantiations_from_secure" title="Via Conventional Hash Functions">
@@ -342,10 +342,10 @@ const exp = (
             </P>
 
             <P>
-              Define <Application fun="hash_chunk" args={[<DefValue n="conv_chunk_chunk" r="chunk"/>, <DefValue n="conv_chunk_i" r="index"/>, <DefValue n="conv_chunk_root" r="is_root"/>]}/> as applying <R n="conv_h"/> to the concatenation of
+              Define <Application fun="hash_chunk" args={[<DefValue n="conv_chunk_chunk" r="chunk"/>, <DefValue n="conv_chunk_root" r="is_root"/>]}/> as applying <R n="conv_h"/> to the concatenation of
                 <Ul>
                   <Li>
-                    the byte <Code>0x00</Code> if <R n="conv_chunk_root"/> is <Code>false</Code>, or the byte <Code>0x01</Code> otherwise,
+                    the byte <Code>0x00</Code> if <R n="conv_chunk_root"/> is <Code>false</Code>, or the byte <Code>0x01</Code> otherwise, and
                   </Li>
                   <Li>
                     <R n="conv_chunk_chunk"/>.
@@ -373,22 +373,22 @@ const exp = (
           </PreviewScope>
         </Hsection>
         
-        <Hsection n="instantiations_william" title="William3">
+        <Hsection n="instantiations_william" title="WILLIAM3">
           <PreviewScope>
             <P>
-              <DefFunction n="william3" r="William3" rb="William3"/> is a Bab instantiation that is almost identical to Blake3. There are only two differences: <R n="william3"/> does not supply chunk indices into the label computation for chunks, and <R n="william3"/> incorporates a length value into the label computation of inner tree vertices. <Rb n="william3"/> has a normal hash mode and a keyed hash mode (based on a 256 bit key); unlike Blake3 it does not support a key derivation mode.
+              <DefFunction n="william3" r="WILLIAM3" rb="WILLIAM3"/> is a Bab instantiation that is almost identical to BLAKE3. There are only two differences: <R n="william3"/> does not supply chunk indices into the label computation for chunks, and <R n="william3"/> incorporates a length value into the label computation of inner tree vertices. <Rb n="william3"/> has a normal hash mode and a keyed hash mode (based on a 256 bit key); unlike BLAKE3 it does not support a key derivation mode, and it does not allow for extendable output.
             </P>
 
             <P>
-              <Rb n="william3"/> uses a <R n="chunk_size"/> of 1024 bytes (just like Blake3). Its <R n="width"/> is 32 bytes (just like Blake3).
+              <Rb n="william3"/> uses a <R n="chunk_size"/> of 1024 bytes (just like BLAKE3). Its <R n="width"/> is 32 bytes (just like BLAKE3).
             </P>
 
             <P>
-              The <R n="hash_chunk"/> function is almost identical to the Blake3 computation of <Em>chunk chaining values</Em>, with a single exception<Marginale>Explained in <Rc n="chunk_indices"/>.</Marginale>: where Blake sets the <Code>t</Code> parameter of its compression function to the chunk index, <R n="william3"/> sets it to 0.
+              The <R n="hash_chunk"/> function is almost identical to the BLAKE3 computation of <Em>chunk chaining values</Em>, with a single exception<Marginale>Explained in <Rc n="chunk_indices"/>.</Marginale>: where BLAKE3 sets the <Code>t</Code> parameter of its compression function to the chunk index, <R n="william3"/> sets it to 0.
             </P>
 
             <P>
-              The <R n="hash_inner"/> function also is almost identical to the Blake3 computation of <Em>parent node chaining values</Em>, with a single exception<Marginale>Explained in <Rc n="length_verification"/>.</Marginale>: whereas Blake3 sets the <Code>t</Code> parameter of its compression function to 0, <R n="william3"/> sets <Code>t</Code> to the third argument (the length value) of <R n="hash_chunk"/> (as an unsigned <Em>little</Em>-endian 64-bit integer).
+              The <R n="hash_inner"/> function is almost identical to the BLAKE3 computation of <Em>parent node chaining values</Em>, with a single exception<Marginale>Explained in <Rc n="length_verification"/>.</Marginale>: whereas BLAKE3 sets the <Code>t</Code> parameter of its compression function to 0, <R n="william3"/> sets <Code>t</Code> to the third argument (the length value) of <R n="hash_chunk"/> (as an unsigned <Em>little</Em>-endian 64-bit integer).
             </P>
           </PreviewScope>
         </Hsection>
@@ -397,16 +397,16 @@ const exp = (
 
     <Hsection n="rationale" title="Design Rationale">
       <P>
-        We now explain the decisions that went into the definition of the Bab hash function.<Marginale>Bab is heavily based off Blake3 and Bao, so many of these rationales are restating the design work that went into Blake3 and Bao. Compared to those two, only little creativity went into the design of Bab.</Marginale>
+        We now explain the decisions that went into the definition of Bab.<Marginale>Bab is heavily based off BLAKE3 and Bao, so many of these rationales are restating the design work that went into BLAKE3 and Bao. Compared to those two, only little creativity went into the design of Bab.</Marginale>
       </P>
 
       <Hsection n="streaming_verification" title="Streaming Verification">
         <P>
-          Using the root label of a Merkle-tree as the digest opens up the option of incrementally verifying a string as it is being received as belonging to the requested hash. To do so, the transmission of each chunk is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. As an optimization, each label is transmitted at most once; it is the receiver’s responsibility to cache labels until they are not needed for verification any longer. At the very start of the transmission, the length of the string has to be sent. We call this transmission the <Def n="baseline" r="baseline verifiable stream" preview={<>
+          Using the root label of a Merkle-tree as the digest allows verifying that some string is a prefix of a string of a known digest. To do so, each chunk is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. As an optimization, each label is transmitted at most once; it is the receiver’s responsibility to cache labels until they are not needed for verification any longer. This data stream is preceded by the length of the string to yield the <Def n="baseline" r="baseline verifiable stream" preview={<>
             <P>
               The <Def fake n="baseline" r="baseline verifiable stream"/> of a string allows for streaming authentication of a get request for a digest. It starts with the length of the requested string, followed by the chunks of the string, where each chunk is preceded by some metadata: the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. Each label is transmitted at most once, duplicates are omitted.
             </P>
-          </>}/>. <Rcb n="fig_stream"/> visualizes and lists an example:
+          </>}/>. <Rcb n="fig_stream"/> gives an example:
         </P>
 
         <Fig
@@ -434,7 +434,7 @@ const exp = (
         </Fig>
 
         <P>
-          The client can verify the stream by eargerly reconstructing the labels of tree nodes and asserting that the computed labels match the received data. You can go through the verification process for the example stream step by step below. Each step consists of reading either a full label or a full chunk from the stream. The graphic shows the Merkle tree and indicates for each node the knowledge that the client has about it: dim if the client has not yet received any data concerning it, diagonally striped orange if the client has received data that it will need later but cannot verify yet, green if it could verify the data and needs to keep it for verification of subsequent data, and gray if it has verified the data and does not need it for any future computation either.
+          The client can verifies stream by eargerly reconstructing the labels of tree nodes and asserting that the computed labels match the received data. You can go through the verification process for the example stream step by step below. Each step consists of reading either a full label or a full chunk from the stream. The graphic shows the Merkle tree and indicates for each node the knowledge that the client has about it: dim if the client has not yet received any data concerning it, diagonally striped orange if the client has received data that it will need later but cannot verify yet, green if it could verify the data and needs to keep it for verification of subsequent data, and gray if it has verified the data and will not need it for any future verification steps.
         </P>
 
         <Div clazz="wide">
@@ -516,7 +516,7 @@ const exp = (
       <Hsection n="slice_verification" title="Slice Verification">
         <PreviewScope>
           <P>
-            The Merkle-tree design allows not only for verifiable streaming of the full string, but also of any slice (of chunks) within. Assume a client wants to receive some number of chunks, starting at some chunk offset. The response data is defined with the same technique as for the <R n="baseline"/>: the transmission of each chunk <Em>in the slice</Em> is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. Chunks outside the slice do not contribute any data. Again, each label is transmitted at most once. Since the length of the slice is known to the client, the response need not be prefixed by the length. We call this transmission the <Def n="baseline_chunk" r="baseline verifiable chunk stream"/>. <Rcb n="fig_stream_slice"/> shows an example of which data needs to be transmitted when the client requests three chunks, starting at offset two (zero-indexed).
+            The Merkle-tree design allows for verifiable streaming of any slice (of chunks) within a string of known digest. Assume a client wants to receive some number of chunks, starting at some chunk offset. The response data is defined with the same technique as for the <R n="baseline"/>: the transmission of each chunk <Em>in the slice</Em> is preceded by the labels of the left and right children of all inner vertices on the path from the root of the tree to that chunk. Chunks outside the slice do not contribute any data. Again, each label is transmitted at most once. Since the length of the slice is known to the client, the response need not be prefixed by the length. We call this transmission the <Def n="baseline_chunk" r="baseline verifiable chunk stream"/>. <Rcb n="fig_stream_slice"/> shows an example of which data needs to be transmitted when the client requests three chunks, starting at offset two (zero-indexed).
           </P>
         </PreviewScope>
 
@@ -527,10 +527,10 @@ const exp = (
           caption={
             <>
               <P>
-                The vertices of our recurring example tree, each showing the data that they contribute to the data stream that lets a client incrementally verify a slice of three chunks, starting at chunk offset two, in the string <Code>hello_world</Code>.
+                The vertices of our recurring example tree, each showing the data that they contribute to let a client incrementally verify the slice <Code>o_worl</Code> in the string <Code>hello_world</Code>.
               </P>
               <P>
-                The list of vertices in the order in which they contribute their child labels or chunks now has some gaps, but is still strictly ascending: <M post=".">1, 2, 6, 7, 8, 9, 10</M>
+                The list of vertices in the order in which they contribute their child labels or chunks has some gaps, but is still strictly ascending: <M post=".">1, 2, 6, 7, 8, 9, 10</M>
               </P>
             </>
           }
@@ -545,7 +545,7 @@ const exp = (
         </Fig>
 
         <P>
-          You can step through this example verification process below:
+          You can step through the verification process for this example below:
         </P>
 
         <Div clazz="wide">
@@ -606,19 +606,19 @@ const exp = (
 
       <Hsection n="length_verification" title="Length Verification">
         <P>
-          A server can provide a proof of bounded size for the length of any string to a client who already has the digest of that string. If the string fits into a single <R n="chunk"/>, the proof simply is that chunk itself (the client can reconstruct the digest and assert that it matches). If the string is longer than a single <R n="chunk"/>, then the root of the Merkle tree is an inner node. The server can then supply the length of the string together with the labels of the left and right children of the root. The client feeds these into <R n="hash_inner"/> and asserts that the result matches the digest.
+          A server can provide a short proof for the length of any string to a client who already has the digest of that string. If the string fits into a single <R n="chunk"/>, the proof simply is that chunk itself (the client can reconstruct the digest and assert that it matches). If the string is longer than a single <R n="chunk"/>, then the root of the Merkle tree is an inner node. The server can then supply the length of the string together with the labels of the left and right children of the root. The client feeds these into <R n="hash_inner"/> and asserts that the result matches the digest.
         </P>
 
         <P>
-          Blake3 does <Em>not</Em> incorporate lengths into the computation of inner vertex labels. Blake3 still supports length proofs, these consist of the length followed by the same data as a reply to a slice request for only the final chunk. Such a proof always contains at least a full chunk, plus twice the height of the tree in labels; its size is logarithmic in the length of the string. For a moderately short string (say, 4096 bytes), the length proof via Blake3 has a size of <M>8 + 2 \cdot 2 \cdot 32 + 1024 = 1160</M> bytes. A William3 lenght proof, in comparison, requires <M>2 \cdot 32 + 8 = 72</M> bytes, even for longer strings.
+          BLAKE3 does <Em>not</Em> incorporate lengths into the computation of inner vertex labels. BLAKE3 still supports length proofs, these consist of the length followed by the same data as a reply to a slice request for only the final chunk. Such a proof always contains at least a full chunk, plus twice the height of the tree in labels; its size is logarithmic in the length of the string. For a moderately short string (say, 4096 bytes), the length proof via BLAKE3 has a size of <M>8 + 2 \cdot 2 \cdot 32 + 1024 = 1160</M> bytes. The corresponding WILLIAM3 lenght proof, in comparison, requires <M>2 \cdot 32 + 8 = 72</M> bytes.
         </P>
 
         <P>
-          A Bab instantiation can choose to simply ignore the length argument in <R n="hash_inner"/>. This can simplify the implementation, and comes at the cost of loosing constant-size length proofs. Such an instantiation can still use the same technique as Blake for logarithmically-sized length proofs of supplying the length followed by the verification data for a slice consisting of the final chunk of the string.
+          A Bab instantiation can choose to simply ignore the length argument in <R n="hash_inner"/>. This can simplify the implementation, but means losing constant-size length proofs. Such an instantiation can still use the same technique as BLAKE3 for logarithmically-sized length proofs: supply the length, followed by the verification data for a slice consisting of the final chunk of the string.
         </P>
 
         <P>
-          For length proofs, it technically suffices to factor the length only into the computation of the root label, but ignore it in the computation of non-root inner labels. Bab opts for the slightly more simple specification that does not introduce this special case. Bab can still be instantiated to this effect, however: since <R n="hash_inner"/> takes an <Code>is_root</Code> flag as an argument, an instantiation can choose to only factor the length into the label computation if <Code>is_root</Code> is <Code>true</Code>. William3 incorporates the length into all node primarily for <Sidenote note={<>
+          For secure, constant-size length proofs, it would suffice to factor the length only into the computation of the root label, but ignore it in the computation of non-root inner labels. Bab <Em>can</Em> be instantiated to this effect: since <R n="hash_inner"/> takes an <Code>is_root</Code> flag as an argument, an instantiation can choose to only factor the length into the label computation if <Code>is_root</Code> is <Code>true</Code>. WILLIAM3 incorporates the length into all node primarily for <Sidenote note={<>
             Although it would be possible to implement root-only length-incorporation in a branchless manner: treat <Code>is_root</Code> as a number (either zero or one), and multiply the length with that number before incorporating it. 
           </>}>simplicity</Sidenote>.
         </P>
@@ -626,13 +626,13 @@ const exp = (
 
       <Hsection n="why_is_root" title="The is_root Flag">
         <P>
-          Both <R n="hash_chunk"/> and <R n="hash_inner"/> take a boolean <Code>is_root</Code> flag as an argument. This flag <Em>must</Em> influence the output to guard against <A href="https://en.wikipedia.org/wiki/Length_extension_attack">length extension attacks</A>. The flag ensures <Bib item="bertoni2014sufficient">final-node separability</Bib> (called <Quotes>subtree-freeness</Quotes> by the Blake3 authors), which prevents length extension attacks.
+          Both <R n="hash_chunk"/> and <R n="hash_inner"/> take a boolean <Code>is_root</Code> flag as an argument. This flag <Em>must</Em> influence the output to guard against <A href="https://en.wikipedia.org/wiki/Length_extension_attack">length extension attacks</A>. The flag ensures <Bib item="bertoni2014sufficient">final-node separability</Bib> (called <Quotes>subtree-freeness</Quotes> by the BLAKE3 authors), which prevents length extension attacks. Ignoring the flag does <Em>note</Em> make the resulting hash function insecure, but it does open up length-extension attacks.
         </P>
       </Hsection>
 
       <Hsection n="chunk_indices" title="No Chunk Indices">
         <P>
-          Blake3 incorporates the index of each <R n="chunk"/> when computing its label in the Merkle-tree. Bab does not. The authors of Blake3 give a clear justification for why they added chunk indices:<Marginale>See the <A href="https://raw.githubusercontent.com/BLAKE3-team/BLAKE3-specs/master/blake3.pdf#section.7">Blake3 paper, section 7.5</A>.</Marginale>
+          BLAKE3 includes the index of each <R n="chunk"/> when computing leaf labels in the Merkle-tree. Bab does not. The authors of BLAKE3 give a clear justification for why they added chunk indices:<Marginale>See the <A href="https://raw.githubusercontent.com/BLAKE3-team/BLAKE3-specs/master/blake3.pdf#section.7">BLAKE3 paper, section 7.5</A>.</Marginale>
         </P>
 
         <Blockquote>
@@ -656,11 +656,11 @@ const exp = (
 
       <Hsection n="binary_tree" title="The Binary Tree">
         <P>
-          Binary trees are not the only candidate digraphs as the merkelization backbone. Some other candidate constructions include ternary trees (which are more efficient than binary trees <A href="https://en.wikipedia.org/wiki/Optimal_radix_choice#Ternary_tree_efficiency">in some applications</A>), and <A href="https://aljoscha-meyer.de/reed/">efficient binary linking schemes</A>. However, for verified streaming, binary trees turn out to be more efficient.
+          Binary trees are not the only candidate digraphs as the merkelization backbone. Other candidate constructions include ternary trees (which are more efficient than binary trees <A href="https://en.wikipedia.org/wiki/Optimal_radix_choice#Ternary_tree_efficiency">in some applications</A>), and <A href="https://aljoscha-meyer.de/reed/">efficient binary linking schemes</A>. However, for verified streaming, binary trees turn out to be more efficient.
         </P>
 
         <P>
-          Interestingly enough, the humble linked list, aka hash chain, has some intriguing properties. If the Merkle-DAG was a linked list where the label of the second chunk incorporates the label of the first chunk, the label of the third chunk that of the second, and so on, verified streaming could be done without sending <Em>any</Em> internal labels — by sending chunks in reverse order. Unfortunately, the worst-case size of slice verification proofs would be linear in the size of the tree. This dilemma is similar to that encountered in <A href="https://aljoscha-meyer.de/reed/assets/references/meyer2023sok.pdf">secure timestamping and related problems</A>. Secure relative timestamping solves a more difficult problem than verified streaming, hence its solution are less efficient than a simple binary Merkle tree.
+          Interestingly enough, the humble linked list, aka hash chain, has some intriguing properties. If the Merkle-DAG was a linked list where the label of the second chunk incorporates the label of the first chunk, the label of the third chunk that of the second, and so on, verified streaming could be done without sending <Em>any</Em> internal labels — by sending chunks in reverse order. Unfortunately, the worst-case size of slice verification proofs would be linear in the size of the tree. This dilemma is similar to that encountered in <A href="https://aljoscha-meyer.de/reed/assets/references/meyer2023sok.pdf">secure timestamping and related problems</A>.
         </P>
 
         <P>
@@ -670,22 +670,23 @@ const exp = (
 
       <Hsection n="chunk_size_concerns" title="Parameterized Chunk Size">
         <P>
-          Bab leaves the <R n="chunk_size"/> as a freely choosable parameter, because different values incur different tradeoffs. At the most basic, a larger <R n="chunk_size"/> shrinks the Merkle tree and thus reduces the metadata overhead in verified streaming, but it also increases the amount of data that needs to be read in sequence without being able to verify it immediately. The <R n="chunk_size"/> also serves as an upper bound to the size of proofs of string length in Bab. Finally, the chunk size also affects the performance of computing strings, see the discussion in <A href="https://raw.githubusercontent.com/BLAKE3-team/BLAKE3-specs/master/blake3.pdf#section.7">Section 7.1 of the Blake3 paper</A>.
+          Bab leaves the <R n="chunk_size"/> as a freely choosable parameter, because different values incur different tradeoffs. At the most basic, a larger <R n="chunk_size"/> shrinks the Merkle tree and thus reduces the metadata overhead in verified streaming, but it also increases the amount of data that needs to be read in sequence without being able to verify it immediately. The <R n="chunk_size"/> also serves as an upper bound to the size of proofs of string length in Bab. Finally, the chunk size also affects the performance of computing digests, see the discussion in <Bib item="blake3">Section 7.1 of the BLAKE3 paper</Bib>.
         </P>
       </Hsection>
+
     </Hsection>
 
     <Hsection n="optimizations" title="Optimized Streaming Verification">
       <P>
-        The <R n="baseline"/> imposes a certain overhead compared to transmitting a raw string. When instantiating with a <R n="width"/> of 32 bytes and a <R n="chunk_size"/> of 1024 bytes (like Blake3 and <R n="william3"/>), roughly 3.1% of streaming data is metadata. This is already a fairly low overhead, but it turns out we can do better.
+        The <R n="baseline"/> imposes a certain overhead compared to transmitting a raw string. When instantiating with a <R n="width"/> of 32 bytes and a <R n="chunk_size"/> of 1024 bytes (like BLAKE3 and <R n="william3"/>), roughly 3.1% of streaming data is metadata. This is already a fairly low overhead, but it turns out we can do better.
       </P>
 
       <P>
-        There are certain redundancies in how streaming verification works. Consider again <Rc n="fig_stream"/>, where the stream starts with (<Application fun="lbl" args={["2"]}/>, <Application fun="lbl" args={["9"]}/>, <Application fun="lbl" args={["3"]}/>, <Application fun="lbl" args={["6"]}/>, …). <Application fun="lbl" args={["2"]}/> can be computed from <Application fun="lbl" args={["3"]}/> and <Application fun="lbl" args={["6"]}/>, and both of those are transmitted. So why transmit the redundant <Application fun="lbl" args={["2"]}/>?
+        There are redundancies in the <R n="baseline"/>. Consider again <Rc n="fig_stream"/>, where the stream starts with (<Application fun="lbl" args={["2"]}/>, <Application fun="lbl" args={["9"]}/>, <Application fun="lbl" args={["3"]}/>, <Application fun="lbl" args={["6"]}/>, …). <Application fun="lbl" args={["2"]}/> can be computed from <Application fun="lbl" args={["3"]}/> and <Application fun="lbl" args={["6"]}/>, and both of those are transmitted. So why transmit the redundant <Application fun="lbl" args={["2"]}/>?
       </P>
 
       <P>
-        Technically, <Em>all</Em> label transmissions are redundant: if the server sends only the chunks (i.e., simply the string itself), the client can successfully reconstruct the digest, after all. The difference lies in the length of the longest consecutive sequence of bytes that the client receives without being able to verify. When sending only the raw string, that sequence is simply all of the string but its final byte. The <R n="baseline"/> minimizes the length of the longest unverifiable sequence. A scheme that skips <Application fun="lbl" args={["2"]}/> sits between the two <Sidenote note={<>Or at least it <Em>appears</Em> to do so at first glance.</>}>extremes</Sidenote>. We now examine in detail the notion of unverifiable subsequences in a verification data stream, and how to leverage it for efficiency gains.
+        Technically, <Em>all</Em> label transmissions are redundant: if the server sends only the chunks (i.e., simply the string itself), the client can successfully reconstruct the digest. The interesting part is the longest consecutive sequence of bytes that the client receives without being able to verify. When sending the raw string, that sequence is simply all of the string but its final byte. The <R n="baseline"/> minimizes the length of the longest unverifiable sequence. A scheme that skips <Application fun="lbl" args={["2"]}/> sits between the two <Sidenote note={<>Or at least it <Em>appears</Em> to do so at first glance.</>}>extremes</Sidenote>. We now examine the notion of unverifiable subsequences in a verification data stream, and how to leverage it for optimizations.
       </P>
 
       <Hsection n="unverifiable_sequences" title="Unverifiable Sequences">
@@ -697,30 +698,34 @@ const exp = (
 
         <PreviewScope>
           <P>
-            An <Def n="unverifiable_seq" r="unverifiable sequence" rs="unverifiable sequences"/> is a sequence of consecutive bytes in a response stream whose corresponding labels and chunks cannot yet be <R n="verified"/>. A maximal such sequence in a stream is called a <Def n="mus" r="MUS" rs="MUSs">maximal unverifiable sequence</Def> (<Def fake n="mus" r="MUS"/>). We call the length of the <R n="mus"/> of a stream its <Def n="delay" r="verification delay" rs="verification delays"/>.
+            An <Def n="unverifiable_seq" r="unverifiable sequence" rs="unverifiable sequences"/> is a sequence of consecutive bytes in a response stream whose corresponding labels and chunks cannot yet be <R n="verified"/>. We call the length of a maximal <R n="unverifiable_seq"/> of a stream its <Def n="delay" r="verification delay" rs="verification delays"/>.
           </P>
         </PreviewScope>
 
         <P>
-          What are the <Rs n="unverifiable_seq"/> in a stream? Any partially transmitted label is unverifiable. Further, a label of a left child is unverifiable without the corresponding label of the right child. Since these are always transmitted in succession, the longest <Rs n="unverifiable_seq"/> contributed by labels have length <M post=".">2 \cdot <R n="width"/> - 1</M> <Rsb n="chunk"/> can only be verified when their final byte gets received, so they contribute <Rs n="unverifiable_seq"/> of length <M post="."><R n="chunk_size"/> - 1</M>
+          What are the <Rs n="unverifiable_seq"/> in the <R n="baseline"/>? Any partially transmitted label is unverifiable. Further, a label of a left child is unverifiable without the label of its sibling. Since these are always transmitted in succession, the longest <Rs n="unverifiable_seq"/> contributed by labels have length <M post=".">2 \cdot <R n="width"/> - 1</M> <Rsb n="chunk"/> can only be verified when their final byte gets received, so they contribute <Rs n="unverifiable_seq"/> of length <M post="."><R n="chunk_size"/> - 1</M>
         </P>
 
         <P>
           This puts the <R n="delay"/> of the <R n="baseline"/> at the maximum of <M>2 \cdot <R n="width"/> - 1</M> and <M post="."><R n="chunk_size"/> - 1</M> In most practical instantiations, the <R n="chunk_size"/> should <Sidenote note={<>
-            Blake3 and <R n="william3"/>, for example, have a <R n="width"/> of 32 bytes and a <R n="chunk_size"/> of 1024 bytes.  
+            BLAKE3 and <R n="william3"/>, for example, have a <R n="width"/> of 32 bytes and a <R n="chunk_size"/> of 1024 bytes.  
           </>}>dominate</Sidenote>. For the remainder of this document, we will assume that <M post=","><R n="chunk_size"/> \geq 2 \cdot <R n="width"/></M> yielding a <R n="delay"/> of the <R n="baseline"/> of <M post="."><R n="chunk_size"/> - 1</M>
         </P>
 
         <P>
           The <R n="delay"/> gives an upper bound of how much progress is lost if a connection failure occurs in the worst possible moment. It also gives the greatest amount of untrusted data that a client has to buffer in memory <Sidenote note={<>
-            This number is one greater than the <R n="delay"/>, because the final byte also needs to be loaded into memory for verification. Verification of <Rs n="chunk"/> might not require holding the full <R n="chunk"/> in memory, but we assume that the client requested the data for a reason, and thus has to hold on to it even if not strictly necessary for verification alone.
-          </>}>simultaneously</Sidenote>. Note that this required buffer capacity is mostly independent from the memory that the client needs for buffering <R n="verified"/> labels for reuse in later assertions. Every label of a right child needs to be kept in memory after verification, in order to verify the labels of <Em>its</Em> two children. Hence, verification always requires the capacity to buffer one label per layer of the Merkle-tree (see <A href="#exVeriDefault_5">this example</A>).
+            This number is one greater than the <R n="delay"/>, because the final byte also needs to be loaded into memory for verification. Verification of <Rs n="chunk"/> might not require holding the full <R n="chunk"/> in memory, but we assume that the client requested the chunk data for a reason, and thus has to hold on to it even if not strictly necessary for verification alone.
+          </>}>simultaneously</Sidenote>.
+        </P>
+
+        <P>
+          Note that this required buffer capacity is mostly independent from the memory that the client needs for buffering <R n="verified"/> labels for reuse in later assertions. Every label of a right child needs to be kept in memory after verification, in order to verify the labels of <Em>its</Em> two children. Hence, verification always requires the capacity to buffer one label per layer of the Merkle-tree (see <A href="#exVeriDefault_5">this example</A>).
         </P>
       </Hsection>
 
       <Hsection n="left_label_omission" title="Omitting Left Labels">
         <P>
-          When a response stream omits a left label, the client cannot verify the corresponding right label when it arrives. But it can, at a later point, reconstruct the label, and then use the reconstructed data to verify both the right label and the reconstructed one. We now describe this process more precisely, and then we investigate how to improve upon the <R n="baseline"/> with this technique.
+          When a response stream omits a left label, the client cannot verify the corresponding right label when it arrives. But it can, at a later point, reconstruct the left label, and then use the reconstructed data to verify both the right label and the reconstructed one. We now describe this process more precisely, and then we investigate how to improve upon the <R n="baseline"/> with this technique.
         </P>
 
         <PreviewScope>
@@ -734,7 +739,7 @@ const exp = (
         </P>
 
         <P>
-          If <R n="llo_l"/> is a leaf vertex, then the stream continues with a <R n="chunk"/>. This chunk can be fed into <R n="hash_chunk"/> to recover a (still unverified) candidate label of <R n="llo_l"/>. Feeding this candidate label and the (still unverified) <Application fun="lbl" args={[<R n="llo_r"/>]}/> into <R n="hash_inner"/> yields a candidate label for <R n="llo_p"/>. The client can now compare the candidate label for <R n="llo_p"/> against the actual <Application fun="lbl" args={[<R n="llo_r"/>]}/> that it received and verified earlier in the stream. If they are equal, then both the received chunk and the received <Application fun="lbl" args={[<R n="llo_r"/>]}/> are successfully <R n="verified"/>.
+          If <R n="llo_l"/> is a leaf vertex, then the stream continues with a <R n="chunk"/>. This chunk can be fed into <R n="hash_chunk"/> to recover a (still unverified) candidate label of <R n="llo_l"/>. Feeding this candidate label and the (still unverified) <Application fun="lbl" args={[<R n="llo_r"/>]}/> into <R n="hash_inner"/> yields a candidate label for <R n="llo_p"/>. The client can now compare the candidate label for <R n="llo_p"/> against the actual <Application fun="lbl" args={[<R n="llo_p"/>]}/> that it received and verified earlier in the stream. If they are equal, then both the received chunk and the received <Application fun="lbl" args={[<R n="llo_r"/>]}/> are successfully <R n="verified"/>.
         </P>
 
         <P>
@@ -742,7 +747,7 @@ const exp = (
         </P>
 
         <P>
-          If <R n="llo_l"/> is a leaf vertex, the <R n="delay"/> <Sidenote note={<>
+          When omitting the label of a leaf vertex <R n="llo_l"/>, the <R n="delay"/> <Sidenote note={<>
             Remember our assumption that <M post="."><R n="chunk_size"/> \geq 2 \cdot <R n="width"/></M>
           </>}>increases</Sidenote> by <R n="width"/>. But when <R n="llo_l"/> is an <Em>inner</Em> vertex, an <R n="unverifiable_seq"/> of length <M>2 \cdot <R n="width"/></M> is turned into an <R n="unverifiable_seq"/> of length <M post=".">3 \cdot <R n="width"/></M> If <M post=","><R n="chunk_size"/> \geq 3 \cdot <R n="width"/></M> then the <R n="delay"/> remains unchanged — despite omitting <R n="width"/> many bytes from the verification stream!
         </P>
@@ -773,7 +778,7 @@ const exp = (
         </Fig>
 
         <P>
-          Below, you can step through the verification process. <A href="#exVeriLight_3">Step 4 will blow your mind!</A>
+          Below, you can step through the verification process. <A href="#exVeriLight_3">Step 4</A> demonstrates the cascading verification of several buffered, unverified right labels.
         </P>
 
         <Div clazz="wide">
@@ -855,23 +860,27 @@ const exp = (
 
         <PreviewScope>
           <P>
-            More precisely: define the <Def n="layer"/> of a tree vertex as the length of the path from it to its leftmost leaf. I.e., the <R n="layer"/> of a leaf is <M post=",">0</M> the <R n="layer"/> of a vertex whose left child is a leaf is <M post=",">1</M> and so on. Assume that <M post="."><R n="chunk_size"/> \geq 2 \cdot <R n="width"/></M> Then, the <Def n="light" r="light verifiable stream"/> of a string is its <R n="baseline"/>, except omitting those labels that are contributed to the stream as left children and that are not labelling vertices whose <R n="layer"/> is divisible by <M post=".">\lceil<R n="chunk_size"/> / <R n="width"/>\rceil</M> 
+            More precisely: define the <Def n="layer"/> of a tree vertex as the length of the path from it to its leftmost leaf. The <R n="layer"/> of a leaf is <M post=",">0</M> the <R n="layer"/> of a vertex whose left child is a leaf is <M post=",">1</M> and so on. Assume that <M post="."><R n="chunk_size"/> \geq 2 \cdot <R n="width"/></M> Then, the <Def n="light" r="light verifiable stream"/> of a string is its <R n="baseline"/>, except omitting those labels that are contributed to the stream as left children and that are not labelling vertices whose <R n="layer"/> is divisible by <M post=".">\lceil<R n="chunk_size"/> / <R n="width"/>\rceil</M> 
           </P>
         </PreviewScope>
 
         <P>
-          Blake3 and <R n="william3"/> have a <R n="width"/> of 32 bytes and a <R n="chunk_size"/> of 1024 bytes, putting the quotient at <M post="."><MFrac num="1024" de="32"/> = 32</M> Omitting all but one out of 32 left labels reduces total number of labels by <M post="."><MFrac num="32 + 1" de="32 + 32"/> = <MFrac num="33" de="64"/> \approx <MFrac num="1" de="2"/></M> Whereas the <R n="baseline"/> has a verification metadata overhead of roughly 3.1% for Bao and <R n="william3"/>, the <R n="light"/> reduces the overhead to roughly 1.6%, without increasing the <R n="delay"/>.
+          BLAKE3 and <R n="william3"/> have a <R n="width"/> of 32 bytes and a <R n="chunk_size"/> of 1024 bytes, putting the quotient at <M post="."><MFrac num="1024" de="32"/> = 32</M> Omitting all but one out of 32 left labels reduces total number of labels by a factor of <M post="."><MFrac num="32 + 1" de="32 + 32"/> = <MFrac num="33" de="64"/> \approx <MFrac num="1" de="2"/></M> Whereas the <R n="baseline"/> has a verification metadata overhead of roughly 3.1% for Bao and <R n="william3"/>, the <R n="light"/> reduces the overhead to roughly 1.6%, without increasing the <R n="delay"/>.
         </P>
       </Hsection>
 
       <Hsection n="omitting_layers" title="Omitting Lower Layers">
         <PreviewScope>
           <P>
-            In addition to the <R n="light"/>, there is an elegant way to reduce metadata transmission in exchange for increasing the <R n="delay"/>: skipping all metadata for the lower <M><Def n="k"/></M> layers of the Merkle tree. These labels have to be reconstructed from successive <Rs n="chunk"/>; reconstructing a label of layer <M><Def n="i"/></M> requires <M>2^<Curly>{<R n="i"/>}</Curly></M> <Rs n="chunk"/>. Hence, the <R n="delay"/> increases to <M post=".">2^<Curly>{<R n="k"/>}</Curly></M>
+            In addition to the <R n="light"/>, there is an elegant way to reduce metadata transmission in exchange for increasing the <R n="delay"/>: skipping all metadata for the <M><Def n="k"/></M> lowest layers of the Merkle tree. These labels have to be reconstructed from successive <Rs n="chunk"/>; reconstructing a label of layer <M><Def n="i"/></M> requires <M>2^<Curly>{<R n="i"/>}</Curly></M> <Rs n="chunk"/>. Hence, the <R n="delay"/> increases to <M post=".">2^<Curly>{<R n="k"/>}</Curly> \cdot <R n="chunk_size"/> - 1</M>
           </P>
 
           <P>
-            The left label of vertices on layer <R n="k"/> must be present, but the labels of the next <M>\lceil<Curly>2^<Curly><R n="chunk_size"/></Curly></Curly> / <R n="width"/>\rceil</M> are skipped. The labels of the next layer are included, then more layers can be skipped, and so on. We call this stream the <Def n="kgrouped" r="k-grouped light verifiable stream"/>. If all labels for all vertices of layer <R n="k"/> and above are included, we call the stream the <Def n="kgrouped_baseline" r="k-grouped baseline verifiable stream"/><Marginale>
+            In the upper layers of the tree, we omit left labels according to the new <R n="delay"/>: the left label of vertices on layer <R n="k"/> must be present, but the labels of the next <M>\lceil<Curly>2^<Curly><R n="k"/></Curly> \cdot <R n="chunk_size"/></Curly> / <R n="width"/>\rceil</M> are skipped. The labels of the next layer are included, then more layers can be skipped, and so on. We call this stream the <Def n="kgrouped" r="k-grouped light verifiable stream"/>.
+          </P>
+
+          <P>
+            We can also apply the optimization of omitting the lowest <R n="k"/> layers without omitting left labels higher up in the tree. We call the resulting stream the <Def n="kgrouped_baseline" r="k-grouped baseline verifiable stream"/><Marginale>
               For <M post=","><R n="k"/> = 0</M> the <R n="kgrouped"/> coincides with the <R n="light"/>, and the <R n="kgrouped_baseline"/> coincides with the <R n="baseline"/>.  
             </Marginale>. Since the <R n="kgrouped"/> has the same <R n="delay"/> but is shorter, it should be preferred.
           </P>
@@ -973,9 +982,9 @@ const exp = (
 
       <Hsection n="slice_streaming" title="Slice Streaming">
         <P>
-          All optimized verifiable streams can also be used for verifiable streaming of slices by incorporating some changes.
-          A label or chunk that would not be transmitted as part of the <R n="baseline_chunk"/> is also not part of the optimized chunk <Sidenote note="This simply filters down the stream from a full-string stream to a slice stream.">stream</Sidenote>.
-          The labels of vertices which do not lie on a path from a chunk of the slice to the root but which would be included in the <R n="baseline_chunk"/> are never <Sidenote note={<>
+          All optimized verifiable streams can also be used for verifiable streaming of slices, by incorporating two changes.
+          First, a label or chunk that would not be transmitted as part of the <R n="baseline_chunk"/> is also not part of the optimized chunk <Sidenote note="This simply filters down the stream from a full-string stream to a slice stream.">stream</Sidenote>.
+          And second, the labels of vertices which do <Em>not</Em> lie on a path from a chunk of the slice to the root but which <Em>would</Em> be included in the <R n="baseline_chunk">baseline verifiable <Strong>chunk</Strong> stream</R> are <Em>never</Em> <Sidenote note={<>
             If such a label was omitted, the label of the corresponding parent vertex would be impossible to reconstruct.
           </>}>omitted</Sidenote>.
         </P>
@@ -1027,15 +1036,14 @@ const exp = (
         </Fig>
 
         <P>
-          In a system where clients can request slices, it stands to reason they might request several (non-overlapping) slices of the same string. Such non-overlapping slices have an overlap in their verification metadata: the streams include the labels of vertices that lie on a path from included chunks to the root, and these paths overlap towards the root. The closer two slices are, the higher is their overlap. In particular, let <M>a</M>, <M>b</M>, and <M>c</M> be slices such that <M>a</M> ends before <M>b</M> starts, and <M>b</M> ends before <M>c</M> starts.
+          In a system where clients can request slices, it stands to reason they might request several (non-overlapping) slices within the same string. Such non-overlapping slices have an overlap in their verification metadata: the streams include the labels of vertices that lie on a path from included chunks to the root, and these paths overlap towards the root. The closer two slices are, the greater their overlap. In particular, let <M>a</M>, <M>b</M>, and <M>c</M> be slices such that <M>a</M> ends before <M>b</M> starts, and <M>b</M> ends before <M>c</M> starts.
           Then the overlap between any path from the root to a leaf in the slice <M>c</M> and any path from the root to a leaf in <M>a</M> or <M>b</M> is included in the overlap beween the path from the root to the first chunk of <M>c</M> and the path from the root to the final chunk of <M>b</M>.
           Likewise, the overlap between any path from the root to a leaf in the slice <M>a</M> and any path from the root to a leaf in <M>b</M> or <M>c</M> is included in the overlap beween the path from the root to the final chunk of <M>a</M> and the path from the root to the first chunk of <M>b</M>.
         </P>
 
         <PreviewScope>
           <P>
-            For the client to tell the server which parts of the verification metadata need not be included in a slice stream because the client already has that data, it hence suffices for the client to supply two integers between <M>0</M> and <M post=":">64</M> the <DefValue n="left_skip"/> indicates to omit from the stream the labels of the children of the first <R n="left_skip"/> vertices on the path from the root to the first chunk of the slice, and the <DefValue n="right_skip"/> indicates to omit from the stream the labels of the children of the first <R n="right_skip"/> vertices on the path from the root to the final chunk of the slice.
-            <Rcb n="fig_stream_slice_skip"/> gives an example.
+            For the client to tell the server which parts of the verification metadata need not be included in a slice stream because the client already has that data, it hence suffices for the client to supply two integers between <M>0</M> and <M post=":">64</M> the <DefValue n="left_skip"/> indicates to omit from the stream the labels of the children of the first <R n="left_skip"/> vertices on the path from the root to the <Em>first</Em> chunk of the slice, and the <DefValue n="right_skip"/> indicates to omit from the stream the labels of the children of the first <R n="right_skip"/> vertices on the path from the root to the <Em>final</Em> chunk of the slice. <Rcb n="fig_stream_slice_skip"/> gives an example.
           </P>
         </PreviewScope>
 
