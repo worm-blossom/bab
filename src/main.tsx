@@ -191,7 +191,7 @@ const exp = (
     ]}
   >
     <P>
-      <Strong>Status: still a draft, the specification might change. The writeup is in a good shape already, however.</Strong>
+      <Strong>Status: Draft. The specification might still change, but there are no <Em>planned</Em> upcoming changes left. If no new issues come up, expecting to declare as stable around 2024/09/09.</Strong>
     </P>
 
     <Hsection n="introduction" title="Introduction">
@@ -1095,6 +1095,20 @@ const exp = (
 
       <P>
         <R n="the_function">Bab</R> is an efficient and flexible family of hash functions that enable streaming verification of strings. Its <R n="william3"/> instantiation is close to the popular BLAKE3 hash function. Unlike BLAKE3-based systems (i.e., <A href="https://github.com/oconnor663/bao">Bao</A>), Bab-based systems support <R n="length_verification">constant-size length proofs</R> for strings of known digest. We have presented <R n="optimizations">optimization techniques</R> for minimizing the metadata overhead of streaming verification that are applicable both to Bab and Bao.
+      </P>
+    </Hsection>
+
+    <Hsection n="acknowledgements" title="Acknowledgements">
+      <P>
+        Most ideas in this specifications are extrapolations from the <Bib item="blake3">BLAKE3 paper</Bib>.
+      </P>
+
+      <P>
+        The optimization of omitting the lowest <M>2^k</M> layers of labels from a verification stream has been known to the Bao project <A href="https://github.com/oconnor663/bao/issues/34">since at least 2020</A>. They use a different (but equivalent) conceptual framing of explicitly grouping chunks together. I first encountered the concept through <A href="https://youtu.be/nk4nefmguZk?feature=shared&t=1249">this explanation</A>.
+      </P>
+
+      <P>
+        I would like to thank <A href="https://jacko.io/">Jack O'Connor</A> (who authored Bao) for helpful feedback, most of which made it directly into the current specification.
       </P>
     </Hsection>
 
