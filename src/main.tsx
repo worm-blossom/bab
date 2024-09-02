@@ -394,14 +394,14 @@ const exp = (
             </P>
 
             <Ul>
-              <Li><M>IV_0</M>: <Code>0x3b638fc8</Code></Li>
-              <Li><M>IV_1</M>: <Code>0xf2fb6841</Code></Li>
-              <Li><M>IV_2</M>: <Code>0x8325a36b</Code></Li>
-              <Li><M>IV_3</M>: <Code>0x4718ffb0</Code></Li>
-              <Li><M>IV_4</M>: <Code>0x7de457ac</Code></Li>
-              <Li><M>IV_5</M>: <Code>0x301393a8</Code></Li>
-              <Li><M>IV_6</M>: <Code>0x45466a79</Code></Li>
-              <Li><M>IV_7</M>: <Code>0xeea3286b</Code></Li>
+              <Li><M>IV_0</M>: <Code>0xc88f633b</Code></Li>
+              <Li><M>IV_1</M>: <Code>0x4168fbf2</Code></Li>
+              <Li><M>IV_2</M>: <Code>0x6ba32583</Code></Li>
+              <Li><M>IV_3</M>: <Code>0xb0ff1847</Code></Li>
+              <Li><M>IV_4</M>: <Code>0xac57e47d</Code></Li>
+              <Li><M>IV_5</M>: <Code>0xa8931330</Code></Li>
+              <Li><M>IV_6</M>: <Code>0x796a4645</Code></Li>
+              <Li><M>IV_7</M>: <Code>0x6b28a3ee</Code></Li>
             </Ul>
 
             <P>
@@ -455,7 +455,9 @@ const exp = (
         </Fig>
 
         <P>
-          The client can verifies stream by eargerly reconstructing the labels of tree nodes and asserting that the computed labels match the received data. You can go through the verification process for the example stream step by step below. Each step consists of reading either a full label or a full chunk from the stream. The graphic shows the Merkle tree and indicates for each node the knowledge that the client has about it: dim if the client has not yet received any data concerning it, diagonally striped orange if the client has received data that it will need later but cannot verify yet, green if it could verify the data and needs to keep it for verification of subsequent data, and gray if it has verified the data and will not need it for any future verification steps.
+          The client can verifies stream by eargerly reconstructing the labels of tree nodes, and asserting that the computed labels match the received data and the lengths of the data match the length values used in the computation of inner <Sidenote note={<>
+            Particular care must be taken at the end of the data stream: the end of input implicitly defines the length of the final chunk, and that implicit length must be validated to match the length(s) explicitly used in the digest.
+          </>}>labels</Sidenote>. You can go through the verification process for the example stream step by step below. Each step consists of reading either a full label or a full chunk from the stream. The graphic shows the Merkle tree and indicates for each node the knowledge that the client has about it: dim if the client has not yet received any data concerning it, diagonally striped orange if the client has received data that it will need later but cannot verify yet, green if it could verify the data and needs to keep it for verification of subsequent data, and gray if it has verified the data and will not need it for any future verification steps.
         </P>
 
         <Div clazz="wide">
