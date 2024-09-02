@@ -1104,7 +1104,7 @@ const exp = (
       </P>
 
       <P>
-        The optimization of omitting the lowest <M>2^k</M> layers of labels from a verification stream has been known to the Bao project <A href="https://github.com/oconnor663/bao/issues/34">since at least 2020</A>. They use a different (but equivalent) conceptual framing of explicitly grouping chunks together. I first encountered the concept through <A href="https://youtu.be/nk4nefmguZk?feature=shared&t=1249">this explanation</A>.
+        The optimization of omitting the lowest <M>2^k</M> layers of labels from a verification stream has been known to the Bao project <A href="https://github.com/oconnor663/bao/issues/34">since at least 2020</A>. They use a different (but equivalent) conceptual framing of explicitly grouping chunks together. I first encountered the concept through <A href="https://youtu.be/nk4nefmguZk?feature=shared&t=1249">this explanation</A> by <A href="https://github.com/rklaehn">Rüdiger Klaehn</A> as part of the implementation of <A href="https://www.iroh.computer/docs/components/blobs">Iroh blobs</A>.
       </P>
 
       <P>
