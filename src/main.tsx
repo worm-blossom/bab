@@ -186,7 +186,7 @@ const exp = (
     authors={[
       {
         name: <A href="https://aljoscha-meyer.de/">Aljoscha Meyer</A>,
-        email: <A href="https://github.com/AljoschaMeyer/bab">https://github.com/AljoschaMeyer/bab</A>,
+        email: <A href="https://github.com/worm-blossom/bab">https://github.com/worm-blossom/bab</A>,
       },
     ]}
   >
