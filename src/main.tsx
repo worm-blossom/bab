@@ -190,10 +190,6 @@ const exp = (
       },
     ]}
   >
-    <P>
-      <Strong>Status: Draft. The specification might still change, but there are no <Em>planned</Em> upcoming changes left. If no new issues come up, expecting to declare as stable around 2024/09/09.</Strong>
-    </P>
-
     <Hsection n="introduction" title="Introduction">
       <P>
         <A href="https://en.wikipedia.org/wiki/Content-addressable_storage">Content-addressable storage</A> lets users refer to strings (files) by a secure hash. Bab is a specification for a hash function specifically designed for usage in peer-to-peer content-addressable storage systems.
