@@ -451,7 +451,7 @@ const exp = (
         </Fig>
 
         <P>
-          The client can verifiy a stream by eargerly reconstructing the labels of tree nodes, and asserting that the computed labels match the received data and the lengths of the data match the length values used in the computation of inner <Sidenote note={<>
+          The client can verify a stream by eagerly reconstructing the labels of tree nodes, and asserting that the computed labels match the received data and the lengths of the data match the length values used in the computation of inner <Sidenote note={<>
             Particular care must be taken at the end of the data stream: the end of input implicitly defines the length of the final chunk, and that implicit length must be validated to match the length(s) explicitly used in the digest.
           </>}>labels</Sidenote>. You can go through the verification process for the example stream step by step below. Each step consists of reading either a full label or a full chunk from the stream. The graphic shows the Merkle tree and indicates for each node the knowledge that the client has about it: dim if the client has not yet received any data concerning it, diagonally striped orange if the client has received data that it will need later but cannot verify yet, green if it could verify the data and needs to keep it for verification of subsequent data, and gray if it has verified the data and will not need it for any future verification steps.
         </P>
