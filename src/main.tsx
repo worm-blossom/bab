@@ -259,7 +259,7 @@ const exp = (
         <PreviewScope>
           <P>
             The <DefFunction n="hash_inner"/> function determines the labels of the inner nodes of Bab’s Merkle-tree.
-            It must be a function that maps a quadruplet of two bytestrings of <R n="width"/> bytes (the labels of the two child nodes), an unsigned 64-bit integer (the length of the input substring covered by the node), and a boolean flag (whether the node is the root node or not) to bytestrings of <R n="width"/> bytes.            
+            It must be a function that maps a pair of bytestrings of <R n="width"/> bytes (the labels of the two child nodes), an unsigned 64-bit integer (the length of the input substring covered by the node), and a boolean flag (whether the node is the root node or not) to bytestrings of <R n="width"/> bytes.            
           </P>
         </PreviewScope>
       </Hsection>
@@ -405,7 +405,7 @@ const exp = (
             </P>
 
             <P>
-              The <R n="hash_inner"/> function is almost identical to the BLAKE3 computation of <Em>parent node chaining values</Em>, with a single exception<Marginale>Explained in <Rc n="length_verification"/>.</Marginale> (beyond the changed <M>IV_0, \ldots, IV_7</M> constants): whereas BLAKE3 sets the <Code>t</Code> parameter of its compression function to 0, <R n="william3"/> sets <Code>t</Code> to the third argument (the length value) of <R n="hash_chunk"/> (as an unsigned <Em>little</Em>-endian 64-bit integer).
+              The <R n="hash_inner"/> function is almost identical to the BLAKE3 computation of <Em>parent node chaining values</Em>, with a single exception<Marginale>Explained in <Rc n="length_verification"/>.</Marginale> (beyond the changed <M>IV_0, \ldots, IV_7</M> constants): whereas BLAKE3 sets the <Code>t</Code> parameter of its compression function to 0, <R n="william3"/> sets <Code>t</Code> to the third argument (the length value) of <R n="hash_inner"/> (as an unsigned <Em>little</Em>-endian 64-bit integer).
             </P>
           </PreviewScope>
         </Hsection>
