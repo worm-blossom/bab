@@ -230,7 +230,7 @@ const exp = (
 
       <Hsection n="parameters" title="Parameters">
         <P>
-          Bab leaves open some paramters, they need to be given as <Quotes>input</Quotes> to the Bab specification.
+          Bab leaves open some parameters; they need to be given as <Quotes>input</Quotes> to the Bab specification.
         </P>
 
         <PreviewScope>
