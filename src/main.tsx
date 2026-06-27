@@ -200,7 +200,7 @@ const exp = (
       </P>
 
       <P>
-        It could store the data it received, and could later issue a request for the same string, resuming at the correct offset. But that request will fail if the orginal server fed it garbage, and the client will be unable to tell which of its two communication partners acted maliciously. Further, the server might have sent it data that is illegal to store. Hence, a careful client should not persist incomplete data. But this makes it unlikely to successfully receive large strings over an unreliable network.
+        It could store the data it received, and could later issue a request for the same string, resuming at the correct offset. But that request will fail if the original server fed it garbage, and the client will be unable to tell which of its two communication partners acted maliciously. Further, the server might have sent it data that is illegal to store. Hence, a careful client should not persist incomplete data. But this makes it unlikely to successfully receive large strings over an unreliable network.
       </P>
 
       <P>
@@ -267,7 +267,7 @@ const exp = (
       <Hsection n="tree" title="The Merkle Tree">
         <P>
           To hash a bytestring <R n="in"/> that was split into a <R n="chunk"/> sequence <R n="chunks"/>, Bab constructs the unique binary tree with one leaf per <R n="chunk"/> such that all left subtrees are complete trees, and the size of the left subtrees is strictly decreasing from left to <Sidenote note={<>
-            This characerization is taken from the <Bib item="blake3">BLAKE3 paper</Bib>. The construction is identical to that of the certificate transparency logs of <Bib item="laurie2021certificate">RFC 9162</Bib>.
+            This characterization is taken from the <Bib item="blake3">BLAKE3 paper</Bib>. The construction is identical to that of the certificate transparency logs of <Bib item="laurie2021certificate">RFC 9162</Bib>.
           </>}>right</Sidenote>. we number the vertices in <A href="https://en.wikipedia.org/wiki/Tree_traversal#Breadth-first_search">depth-first</A> order, prioritizing left children over right children, starting at <M>1</M> in the root. <Rc n="fig_tree_unlabeled"/> shows an example.
         </P>
 
@@ -299,7 +299,7 @@ const exp = (
           </P>
 
           <P>
-            If <R n="lblv"/> is an inner vertex, let <DefValue n="lbl_inner_l" r="left"/> denote its left child, let <DefValue n="lbl_inner_r" r="right"/> denote its right child, let <DefValue n="lbl_inner_len" r="len"/> denote the total length of the <Rs n="chunk"/> corresponding to all leaf descendents of <R n="lblv"/>, and let <DefValue n="lbl_inner_is_root" r="is_root"/> be <M>\top</M> if <R n="lblv"/> is the root of the tree and <M>\bot</M> otherwise.
+            If <R n="lblv"/> is an inner vertex, let <DefValue n="lbl_inner_l" r="left"/> denote its left child, let <DefValue n="lbl_inner_r" r="right"/> denote its right child, let <DefValue n="lbl_inner_len" r="len"/> denote the total length of the <Rs n="chunk"/> corresponding to all leaf descendants of <R n="lblv"/>, and let <DefValue n="lbl_inner_is_root" r="is_root"/> be <M>\top</M> if <R n="lblv"/> is the root of the tree and <M>\bot</M> otherwise.
             Then <Application fun="lbl" args={[<R n="lblv"/>]}/> is <Application fun="hash_inner" args={[<R n="lbl_inner_l"/>, <R n="lbl_inner_r"/>, <R n="lbl_inner_len"/>, <R n="lbl_inner_is_root"/>]}/>.
           </P>
         </PreviewScope>
@@ -386,7 +386,7 @@ const exp = (
             </P>
 
             <P>
-              Where BLAKE3 uses its constants <M post=",">IV_0, \ldots, IV_7</M> <R n="william3"/> uses the following constants instead:<Marginale>The constants form the BLAKE3 digest of the ASCII-encoded string <Code>WILLIAM3</Code>.</Marginale><Marginale>Using diferent constants than BLAKE3 ensures that BLAKE3 and <R n="william3"/> produce non-equal digests for equal inputs, even if the inputs fit into a single chunk.</Marginale>
+              Where BLAKE3 uses its constants <M post=",">IV_0, \ldots, IV_7</M> <R n="william3"/> uses the following constants instead:<Marginale>The constants form the BLAKE3 digest of the ASCII-encoded string <Code>WILLIAM3</Code>.</Marginale><Marginale>Using different constants than BLAKE3 ensures that BLAKE3 and <R n="william3"/> produce non-equal digests for equal inputs, even if the inputs fit into a single chunk.</Marginale>
             </P>
 
             <Ul>
@@ -629,7 +629,7 @@ const exp = (
         </P>
 
         <P>
-          BLAKE3 does <Em>not</Em> incorporate lengths into the computation of inner vertex labels. BLAKE3 still supports length proofs, these consist of the length followed by the same data as a reply to a slice request for only the final chunk. Such a proof always contains at least a full chunk, plus twice the height of the tree in labels; its size is logarithmic in the length of the string. For a moderately short string (say, 4096 bytes), the length proof via BLAKE3 has a size of <M>8 + 2 \cdot 2 \cdot 32 + 1024 = 1160</M> bytes. The corresponding <R n="william3"/> lenght proof, in comparison, requires <M>2 \cdot 32 + 8 = 72</M> bytes.
+          BLAKE3 does <Em>not</Em> incorporate lengths into the computation of inner vertex labels. BLAKE3 still supports length proofs, these consist of the length followed by the same data as a reply to a slice request for only the final chunk. Such a proof always contains at least a full chunk, plus twice the height of the tree in labels; its size is logarithmic in the length of the string. For a moderately short string (say, 4096 bytes), the length proof via BLAKE3 has a size of <M>8 + 2 \cdot 2 \cdot 32 + 1024 = 1160</M> bytes. The corresponding <R n="william3"/> length proof, in comparison, requires <M>2 \cdot 32 + 8 = 72</M> bytes.
         </P>
 
         <P>
@@ -699,7 +699,7 @@ const exp = (
       </P>
 
       <P>
-        Technically, <Em>all</Em> label transmissions are redundant: if the server sends only the chunks (i.e., simply the string itself), the client can successfully reconstruct the digest. The interesting part is the longest consecutive sequence of bytes that the client receives without being able to verify. When sending the raw string, that sequence is simply all of the string but its final byte. The <R n="baseline"/> minimizes the length of the longest unverifiable sequence. A scheme that skips <Application fun="lbl" args={["2"]}/> sits between the two <Sidenote note={<>Or at least it <Em>appears</Em> to do so at first glance.</>}>extremes</Sidenote>. We now examine the notion of unverifiable subsequences in a verification data stream, and how to leverage it for optimizations.
+        Technically, <Em>all</Em> label transmissions are redundant: if the server sends only the chunks (i.e., simply the string itself), the client can successfully reconstruct the digest. The interesting part is the longest consecutive sequence of bytes that the client receives without being able to verify. When sending the raw string, that sequence is simply all of the string but its final byte. The <R n="baseline"/> minimizes the length of the longest unverifiable sequence. A scheme that skips <Application fun="lbl" args={["2"]}/> sits between the two <Sidenote note={<>Or at least it <Em>appears</Em> to do so at first glance.</>}>extremes</Sidenote>. We now examine the notion of unverifiable sub-sequences in a verification data stream, and how to leverage it for optimizations.
       </P>
 
       <Hsection n="unverifiable_sequences" title="Unverifiable Sequences">
@@ -1050,8 +1050,8 @@ const exp = (
 
         <P>
           In a system where clients can request slices, it stands to reason they might request several (non-overlapping) slices within the same string. Such non-overlapping slices have an overlap in their verification metadata: the streams include the labels of vertices that lie on a path from included chunks to the root, and these paths overlap towards the root. The closer two slices are, the greater their overlap. In particular, let <M>a</M>, <M>b</M>, and <M>c</M> be slices such that <M>a</M> ends before <M>b</M> starts, and <M>b</M> ends before <M>c</M> starts.
-          Then the overlap between any path from the root to a leaf in the slice <M>c</M> and any path from the root to a leaf in <M>a</M> or <M>b</M> is included in the overlap beween the path from the root to the first chunk of <M>c</M> and the path from the root to the final chunk of <M>b</M>.
-          Likewise, the overlap between any path from the root to a leaf in the slice <M>a</M> and any path from the root to a leaf in <M>b</M> or <M>c</M> is included in the overlap beween the path from the root to the final chunk of <M>a</M> and the path from the root to the first chunk of <M>b</M>.
+          Then the overlap between any path from the root to a leaf in the slice <M>c</M> and any path from the root to a leaf in <M>a</M> or <M>b</M> is included in the overlap between the path from the root to the first chunk of <M>c</M> and the path from the root to the final chunk of <M>b</M>.
+          Likewise, the overlap between any path from the root to a leaf in the slice <M>a</M> and any path from the root to a leaf in <M>b</M> or <M>c</M> is included in the overlap between the path from the root to the final chunk of <M>a</M> and the path from the root to the first chunk of <M>b</M>.
         </P>
 
         <PreviewScope>
