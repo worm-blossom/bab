@@ -889,7 +889,7 @@ const exp = (
           </P>
 
           <P>
-            In the upper layers of the tree, we omit left labels according to the new <R n="delay"/>: the left label of vertices on layer <R n="k"/> must be present, but the labels of the next <M>\lceil<Curly>2^<Curly><R n="k"/></Curly> \cdot <R n="chunk_size"/></Curly> / <R n="width"/>\rceil</M> are skipped. The labels of the next layer are included, then more layers can be skipped, and so on. We call this stream the <Def n="kgrouped" r="k-grouped light verifiable stream"/>.
+            In the upper layers of the tree, we omit left labels according to the new <R n="delay"/>: the left label of vertices on layer <R n="k"/> must be present, but the labels of the next <M>\lceil<Curly>2^<Curly><R n="k"/></Curly> \cdot <R n="chunk_size"/></Curly> / <R n="width"/>\rceil</M> layers are skipped. The labels of the next layer are included, then more layers can be skipped, and so on. We call this stream the <Def n="kgrouped" r="k-grouped light verifiable stream"/>.
           </P>
 
           <P>
